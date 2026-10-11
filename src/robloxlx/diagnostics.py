@@ -8,6 +8,8 @@ import shutil
 import subprocess  # nosec B404 -- used only with fixed, read-only probe arguments
 from pathlib import Path
 
+from robloxlx.compatibility.wine import detect_wine
+
 
 def _run(args: list[str], timeout: float = 3.0) -> str | None:
     executable = shutil.which(args[0])
@@ -64,6 +66,7 @@ def collect_diagnostics() -> dict[str, str]:
         gpu = _run(["lspci", "-nn", "-d", "::0300"])
     gl = _run_matching(["glxinfo", "-B"], ("opengl vendor", "opengl renderer", "opengl version"))
     vk = _run_matching(["vulkaninfo", "--summary"], ("apiversion", "devicename", "drivername"))
+    wine = detect_wine()
     return {
         "distribution": _os_name(),
         "kernel": platform.release() or "UNKNOWN",
@@ -73,5 +76,6 @@ def collect_diagnostics() -> dict[str, str]:
         "nvidia_driver": _run(["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"]) or "UNKNOWN",
         "opengl": gl or ("UNKNOWN (glxinfo present; no summary fields returned)" if shutil.which("glxinfo") else "UNKNOWN"),
         "vulkan": vk or ("UNKNOWN (vulkaninfo present; no summary fields returned)" if shutil.which("vulkaninfo") else "UNKNOWN"),
+        "wine_api_translation": wine.version if wine else "NOT FOUND",
         "dependencies": ", ".join(name for name in ("glxinfo", "vulkaninfo", "nvidia-smi", "lspci") if shutil.which(name)) or "NONE OF OPTIONAL PROBES FOUND",
     }

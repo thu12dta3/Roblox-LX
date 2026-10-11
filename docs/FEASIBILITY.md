@@ -1,31 +1,30 @@
 # Feasibility research — 2026-10-11
 
-This is a documentary audit, not a runtime test. No Roblox binaries were obtained or inspected. The project requirement is native Linux execution: no VM, emulator, or operating-system API translation.
+Documentary audit only; no Roblox binary or account was used. Agreed project scope: official Windows desktop client plus user-space Windows API translation through Wine; no Windows/macOS guest operating system, VM, mobile/tablet client, or macOS client. Roblox files remain unmodified and anti-cheat is not bypassed.
 
 ## Findings
 
 | Question | Finding | Status |
 |---|---|---|
-| Does Roblox officially support Linux desktop? | Roblox Support lists Linux as unsupported; PC requirements list Windows 10/11 and macOS. | BLOCKED |
-| Is a native Linux Roblox desktop client available to this project? | No official Linux client is documented by Roblox Support. | BLOCKED |
-| Would Darling meet the clarified goal? | No. Darling runs macOS binaries by translating/reimplementing Darwin and macOS APIs on Linux. That is a compatibility translation layer. | OUT OF SCOPE |
-| Would Wine meet the clarified goal? | No. Wine translates Windows APIs for Linux. | OUT OF SCOPE |
-| Would a virtual machine/emulator meet the clarified goal? | No, explicitly excluded by the user. | OUT OF SCOPE |
-| Can ROBLOX-LX build a native client from the current public interfaces? | No supported native client or official Linux client-development interface has been identified. The Roblox client is proprietary and its source is not in this repository. | BLOCKED pending Roblox |
-| Can Darling or Wine source be integrated? | Irrelevant to the clarified native-only product goal; no code was copied. License notices are retained for research awareness only. | OUT OF SCOPE |
-| Has Roblox been launched or tested? | No. | NOT TESTED |
+| Does Roblox officially support Linux? | Current Roblox Support requirements list Linux as unsupported. | BLOCKED (official support) |
+| Can desktop Windows APIs be translated without a Windows VM? | Wine describes itself as translating Windows API calls to POSIX; it does not boot a Windows guest OS. | SUPPORTED (general capability) |
+| Is Wine a candidate layer within the clarified scope? | Yes, as an external Windows API compatibility runtime; it must not be confused with full Windows emulation or a VM. | IN SCOPE, not integrated yet |
+| Does Roblox's Windows client work with Hyperion on Wine today? | Roblox staff member Bitdancer stated Hyperion with all features enabled does not work on Wine, explaining that unsupported undocumented features are missing. | BLOCKED (per staff statement) |
+| Can ROBLOX-LX disable those Hyperion checks or fake support? | No. That violates the project's explicit safety rules. | BLOCKED / PROHIBITED |
+| Is there a Roblox-issued Linux client? | Not documented in Roblox's current PC system requirements. | BLOCKED |
+| Are macOS client, mobile/tablet client, Darling, or VM routes allowed? | No, explicitly excluded by the user. | OUT OF SCOPE |
+| Has the Roblox client been launched or tested? | No. Wine 11.19 is installed; only a locally compiled minimal x86_64 PE smoke program was run in a temporary Wine prefix. No Roblox files or account were touched. | NOT TESTED |
 
-## Conclusion
+## Engineering conclusion
 
-The requested result cannot currently be implemented within the stated constraints. Roblox's official requirements say Linux is unsupported, and no official native Linux client is available here. Making an existing Windows or macOS client run on Linux requires an API-translation layer or VM/emulator, which the user explicitly ruled out. A launcher, graphics driver, or diagnostics tool cannot replace Roblox's proprietary client.
-
-The product goal is therefore BLOCKED by an external dependency: Roblox must release a native Linux client or an official interface and authorization for a native client. Until then, ROBLOX-LX should not pursue Darling, Wine, emulation, or compatibility shims as substitutes. Maintain only the diagnostic scaffold and report the blocker clearly.
+The clarified plan can use Windows API translation through Wine without a Windows VM. Wine 11.19 is present on the target host, and a locally compiled, trivial x86_64 PE program completed under Wine using a temporary prefix. This confirms only basic PE startup; it says nothing about Roblox. The practical blocker remains Hyperion: Roblox staff says full-featured Hyperion does not work on Wine. The project can implement a Wine process/runtime manager and test harmless Windows desktop programs. It cannot reach normal Roblox gameplay unless Roblox makes Hyperion compatible with Wine or provides another supported path. Do not patch Roblox, disable Hyperion, or claim a successful launch before evidence exists.
 
 ## Sources
 
 - [Roblox Support: Computer Hardware & Operating System Requirements](https://en.help.roblox.com/hc/en-us/articles/203312800-Computer-Hardware-Operating-System-Requirements)
-- [Darling project README](https://github.com/darlinghq/darling) — documents macOS API translation on Linux; reviewed only to assess and exclude it.
-- [WineHQ: About Wine](https://www.winehq.org/about) — describes Windows API translation; reviewed only to assess and exclude it.
-- [MacOBlox project README](https://github.com/aubree-lat/MacOBlox) — third-party Darling-based path; not used or tested here.
+- [Roblox Developer Forum: staff statement on Hyperion and Wine](https://devforum.roblox.com/t/roblox-on-linux-everything-summarized-in-1-post-updated/3236696/42)
+- [WineHQ: About Wine](https://www.winehq.org/about)
+- [Darling project README](https://github.com/darlinghq/darling) — excluded; this is a macOS compatibility layer.
+- [MacOBlox project README](https://github.com/aubree-lat/MacOBlox) — excluded; it uses the macOS client and Darling.
 
-Sources accessed 2026-10-11. Third-party project claims were not independently reproduced.
+Sources accessed 2026-10-11. The staff statement is Roblox's published explanation; ROBLOX-LX did not independently test Hyperion.

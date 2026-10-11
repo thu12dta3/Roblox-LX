@@ -11,6 +11,7 @@ import unittest
 from pathlib import Path
 
 from robloxlx import __version__
+from robloxlx.compatibility.wine import detect_wine
 from robloxlx.diagnostics import collect_diagnostics
 
 EXIT_OK = 0
@@ -63,9 +64,12 @@ def command_verify(_: argparse.Namespace) -> int:
 
 
 def command_compatibility(_: argparse.Namespace) -> int:
-    print("Native Roblox client for Linux: BLOCKED (no official Linux client is available)")
-    print("VM, emulator, and OS API-translation backends: OUT OF SCOPE")
-    print("Launch readiness: BLOCKED until Roblox provides a native client or supported interface")
+    wine = detect_wine()
+    print(f"Wine runtime: {wine.version if wine else 'NOT FOUND'}")
+    print("Basic Windows PE startup: smoke-tested on development host; not a Roblox compatibility result")
+    print("Hyperion under Wine: BLOCKED (Roblox staff says full-featured Hyperion does not work on Wine)")
+    print("Mac client, mobile client, full OS emulation, and VMs: OUT OF SCOPE")
+    print("Launch readiness: BLOCKED; no process started and no anti-cheat changes are permitted")
     print("No anti-cheat bypass, client patching, memory modification, or protocol spoofing is implemented.")
     return EXIT_OK
 
@@ -74,7 +78,7 @@ def command_launch(args: argparse.Namespace) -> int:
     if args.dry_run:
         details = collect_diagnostics()
         _print_status(details)
-        print("Launch plan: BLOCKED (no official native Linux client; no process started)")
+        print("Launch plan: BLOCKED (Wine/Hyperion path is not validated; no process started)")
         return EXIT_BLOCKED
     print("Launch blocked: Roblox-LX has no validated, policy-compliant Roblox launch backend.")
     print("No client was started and no account credentials were accessed.")

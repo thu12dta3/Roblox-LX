@@ -4,8 +4,10 @@
 |---|---|---|
 | Linux host detection | SUPPORTED | Implemented read-only Python probes. |
 | Graphics utility detection | PARTIAL | Detects utility availability and samples output; not a rendering test. |
-| Native Roblox client for Linux | BLOCKED | Roblox Support currently says Linux is unsupported; no official Linux build is available to this project. |
-| VM, emulator, or API translation | OUT OF SCOPE | Excluded by the user's clarified requirement. |
+| Windows API translation through Wine | PARTIAL | Wine 11.19 is detected; a trivial x86_64 PE startup smoke passed in an isolated temporary prefix. This is not an API-coverage or Roblox test. |
+| Hyperion on Wine | BLOCKED | Roblox staff says full-featured Hyperion does not work on Wine. No bypass is permitted. |
+| macOS client/Darling | OUT OF SCOPE | Explicitly excluded by the user. |
+| Mobile/tablet client or VM | OUT OF SCOPE | Explicitly excluded by the user. |
 | Roblox launch, experiences, multiplayer, rendering/audio/input | UNKNOWN | Not tested; launch intentionally fails closed. |
 
-Third-party MacOBlox reports working features through Darling, but that is a translated macOS environment and does not meet ROBLOX-LX's native-only goal. Those reports are not ROBLOX-LX test results.
+Roblox itself remains NOT TESTED. The Wine adapter is limited to discovery and command construction; no Wine backend lifecycle or Roblox launch path exists yet.

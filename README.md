@@ -1,14 +1,15 @@
 # ROBLOX-LX
 
-**Bannaman6655 Productions** — private project seeking a native Linux Roblox client. ROBLOX-LX is not affiliated with Roblox Corporation.
+**Bannaman6655 Productions** — private Linux desktop compatibility project. ROBLOX-LX is not affiliated with Roblox Corporation.
 
 ## Purpose and current state
 
-The goal is to play Roblox normally through a **native Linux desktop client**, without a virtual machine, emulator, or operating-system API translation layer. The current release is only an early diagnostic CLI foundation; it does not install or launch Roblox. Roblox's official requirements currently list Linux as unsupported. Until Roblox provides a native Linux client or an official interface that permits one, native Linux execution is BLOCKED. See [feasibility](docs/FEASIBILITY.md) and [risks](docs/RISKS.md).
+The goal is to run the official **Windows desktop client** on Linux by translating the APIs it calls through Wine, without booting or emulating a Windows/macOS operating system. Mac clients, mobile/tablet versions, and VMs are out of scope. The current release is only an early diagnostic CLI foundation; it does not install or launch Roblox. Roblox lists Linux as unsupported, and a Roblox staff statement says Hyperion with all security features enabled does not work under Wine. We will not bypass or disable it, so gameplay remains BLOCKED unless Roblox restores official Wine support or provides a compliant path. See [feasibility](docs/FEASIBILITY.md) and [risks](docs/RISKS.md).
 
 ## Implemented
 
-- `robloxlx doctor`: read-only host and graphics-tool probes.
+- `robloxlx doctor`: read-only host, graphics-tool, and Wine API-translator probes.
+- Wine runtime detection and safe argument construction for an existing local Windows program (no execution yet).
 - `robloxlx verify`: optional SHA-256 measurement for a user-configured local file; no official trust baseline is bundled.
 - `robloxlx compatibility`: reports current known limitations.
 - `robloxlx launch --dry-run`: reports readiness and never starts a process.
@@ -32,9 +33,9 @@ Optional host probes are `nvidia-smi`, `lspci`, `glxinfo`, and `vulkaninfo`. Mis
 
 | Capability | Status | Evidence |
 |---|---|---|
-| Native Linux Roblox client | BLOCKED | Roblox Support lists Linux as unsupported; no official Linux client is available to this project. |
-| VM, emulator, or OS API translation | OUT OF SCOPE | Explicitly excluded by the project goal. |
-| Roblox launch | BLOCKED | Requires an official native Linux client or official Roblox-supported interface. |
+| Roblox Windows desktop client under Wine API translation | BLOCKED | Roblox staff says Hyperion with all features enabled does not work on Wine; no bypass is implemented. |
+| Full Windows/macOS OS, VM, emulator, Mac/mobile client | OUT OF SCOPE | Explicitly excluded. |
+| Roblox launch | BLOCKED | No currently validated path that keeps Hyperion intact. |
 | Games, rendering, audio, input, multiplayer | UNKNOWN | No real-client or game test performed. |
 
 Never interpret a local hash as proof that a binary is official. Do not supply account passwords to ROBLOX-LX. Do not disable or bypass anti-cheat mechanisms.

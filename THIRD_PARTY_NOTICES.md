@@ -5,6 +5,8 @@ No third-party source code is included in ROBLOX-LX 0.1.0. Python runtime/librar
 Research references (not bundled or incorporated):
 
 - Darling: GPL-3.0 project; consult per-component notices before any integration or distribution.
+- Darling Metal: MPL-2.0 notices in upstream source; runtime framework is an external dependency, not included in ROBLOX-LX.
+- Indium/Iridium: upstream Indium repository declares 0BSD; used only through the installed external Darling runtime. No source copied.
 - MacOBlox: its public repository identifies the project as MIT licensed. Its source has not been copied into ROBLOX-LX. Review every file and license before any future reuse.
 - Wine: upstream identifies the source as LGPL licensed; no Wine code is included.
 

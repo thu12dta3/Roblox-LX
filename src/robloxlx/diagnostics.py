@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import platform
+import re
 import shutil
 import subprocess  # nosec B404 -- used only with fixed, read-only probe arguments
 from ctypes.util import find_library
@@ -47,6 +48,38 @@ def _run_matching(args: list[str], markers: tuple[str, ...]) -> str | None:
     return "; ".join(selected[:4])[:500] if selected else None
 
 
+def _probe_vulkan_wsi(session: str) -> str:
+    """Report host Vulkan instance surface extensions from vulkaninfo summary."""
+    executable = shutil.which("vulkaninfo")
+    if not executable:
+        return "UNKNOWN (vulkaninfo NOT FOUND)"
+    try:
+        result = subprocess.run(  # nosec B603 -- fixed read-only Vulkan capability probe, no shell
+            [executable, "--summary"], capture_output=True, text=True,
+            timeout=5.0, check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return "UNKNOWN (vulkaninfo probe failed)"
+    if result.returncode:
+        return f"UNKNOWN (vulkaninfo exit {result.returncode})"
+    output = (result.stdout or "") + "\n" + (result.stderr or "")
+    available = {
+        line.split(":", 1)[0].strip()
+        for line in output.splitlines()
+        if line.strip().startswith("VK_") and ": extension revision" in line
+    }
+    expected = {
+        "Wayland": "VK_KHR_wayland_surface",
+        "X11": "VK_KHR_xcb_surface",
+    }.get(session)
+    names = ["VK_KHR_surface"]
+    if expected:
+        names.append(expected)
+    if not available:
+        return "UNKNOWN (instance extension list absent from vulkaninfo summary)"
+    return "; ".join(f"{name}={'FOUND' if name in available else 'NOT FOUND'}" for name in names)
+
+
 def _os_name() -> str:
     try:
         for line in Path("/etc/os-release").read_text(encoding="utf-8").splitlines():
@@ -57,6 +90,26 @@ def _os_name() -> str:
     return platform.system() or "UNKNOWN"
 
 
+def _probe_darling_metal_llvm(executable: Path | None) -> str:
+    """Read Iridium's exact host LLVM library name without starting Darling."""
+    if executable is None:
+        return "UNKNOWN (Darling NOT FOUND)"
+    iridium = executable.parent.parent / "libexec/darling/usr/lib/darling/libiridium.dylib"
+    try:
+        names = sorted(set(re.findall(rb"libLLVM-[0-9]+\.so(?:\.[0-9]+)*", iridium.read_bytes())))
+    except OSError:
+        return "UNKNOWN (Iridium library not found)"
+    if not names:
+        return "UNKNOWN (LLVM soname not identified)"
+    results = []
+    for raw in names:
+        name = raw.decode("ascii")
+        lookup = name.removeprefix("lib").split(".so", 1)[0]
+        found = find_library(lookup)
+        results.append(f"{name}={'FOUND' if found else 'NOT FOUND'}")
+    return "; ".join(results)
+
+
 def collect_diagnostics() -> dict[str, str]:
     """Collect only host metadata and command availability; never change the system."""
     session = "Wayland" if os.environ.get("WAYLAND_DISPLAY") else (
@@ -65,13 +118,12 @@ def collect_diagnostics() -> dict[str, str]:
     gpu = _run(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"])
     if not gpu:
         gpu = _run(["lspci", "-nn", "-d", "::0300"])
-    gl = _run_matching(["glxinfo", "-B"], ("opengl vendor", "opengl renderer", "opengl version"))
     vk = _run_matching(["vulkaninfo", "--summary"], ("apiversion", "devicename", "drivername"))
     darling = detect_darling()
     libraries = {
-        "OpenGL": "GL", "EGL": "EGL", "Vulkan": "vulkan",
+        "Vulkan": "vulkan",
         "PulseAudio": "pulse", "PipeWire": "pipewire-0.3",
-        "X11": "X11", "XInput2": "Xi", "Wayland": "wayland-client",
+        "X11/WSI": "X11", "XInput2": "Xi", "Wayland/WSI": "wayland-client",
     }
     library_status = [f"{label}={'FOUND' if find_library(name) else 'NOT FOUND'}" for label, name in libraries.items()]
     return {
@@ -81,13 +133,14 @@ def collect_diagnostics() -> dict[str, str]:
         "graphical_session": session,
         "gpu": gpu or "UNKNOWN",
         "nvidia_driver": _run(["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"]) or "UNKNOWN",
-        "opengl": gl or ("UNKNOWN (glxinfo present; no summary fields returned)" if shutil.which("glxinfo") else "UNKNOWN"),
         "vulkan": vk or ("UNKNOWN (vulkaninfo present; no summary fields returned)" if shutil.which("vulkaninfo") else "UNKNOWN"),
+        "host_vulkan_wsi_extensions": _probe_vulkan_wsi(session),
         "darling_macos_runtime": darling.version if darling else "NOT FOUND",
-        "darling_graphics_tools": ", ".join(name for name in ("glxinfo", "vulkaninfo", "eglinfo") if shutil.which(name)) or "UNKNOWN",
+        "darling_metal_host_llvm": _probe_darling_metal_llvm(darling.executable if darling else None),
+        "vulkan_graphics_tools": ", ".join(name for name in ("vulkaninfo", "vkcube") if shutil.which(name)) or "UNKNOWN",
         "darling_audio_tools": ", ".join(name for name in ("pw-cat", "pacat", "pactl") if shutil.which(name)) or "UNKNOWN",
         "darling_input_tools": ", ".join(name for name in ("xinput", "libinput") if shutil.which(name)) or "UNKNOWN",
         "darling_network_tools": ", ".join(name for name in ("getent", "resolvectl") if shutil.which(name)) or "UNKNOWN",
         "darling_host_libraries": ", ".join(library_status),
-        "dependencies": ", ".join(name for name in ("glxinfo", "vulkaninfo", "nvidia-smi", "lspci") if shutil.which(name)) or "NONE OF OPTIONAL PROBES FOUND",
+        "dependencies": ", ".join(name for name in ("vulkaninfo", "vkcube", "nvidia-smi", "lspci") if shutil.which(name)) or "NONE OF OPTIONAL PROBES FOUND",
     }

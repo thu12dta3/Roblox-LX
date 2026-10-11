@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "roblox-lx"
+version = "0.1.0"
+description = "Diagnostic and compatibility launcher foundation for Linux"
+requires-python = ">=3.10"
+license = { text = "PROPRIETARY ALL RIGHTS RESERVED" }
+authors = [{ name = "Bannaman6655 Productions" }]
+dependencies = []
+
+[project.scripts]
+robloxlx = "robloxlx.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,5 +1,20 @@
 # Test results
 
+## 2026-10-11 (successful Darwin execution and real API probes)
+
+- Installed corrected local Darling package `20260609-2` through Konsole. `/usr/bin/darlingserver` is now present. Installed official Arch `llvm18-libs 18.1.8-2`, satisfying the `libLLVM-18.so` name embedded in the release's Iridium library; no LLVM library was renamed across versions.
+- `PYTHONPATH=src python -m robloxlx.cli darling-test` — PASS; real x86_64 Mach-O executable returned `ROBLOXLX_MACHO_OK` and status 0 through Darling. It calls the installed Darling libSystem `write`/`exit` APIs. Direct Darwin syscall instructions were an invalid fixture for Darling's library translation model and were replaced.
+- The probe now initializes its own prefix via the Darling launcher, invokes shutdown for that prefix, and records shutdown status and retained prefix path. Root-owned overlay workdirs are preserved outside the disposable build directory. A cleanup permission error previously masked the result; the layout now avoids that error. CLI logs persist with mode 0600.
+- `PYTHONPATH=src python -m robloxlx.cli network-test` — PASS; `getaddrinfo(localhost)` and a TCP loopback connection transferred and compared the full fixture payload, returning `ROBLOXLX_NETWORK_OK` and status 0. No external service or Roblox protocol was contacted.
+- Network variant `accept(fd, NULL, NULL)` — FAIL; process exited at that call. Supplying sockaddr and length output buffers allowed the complete TCP probe to pass. Upstream `darling-xnu/.../network/accept.c` unconditionally dereferences these pointers after successful Linux accept; the external runtime was not patched.
+- `PYTHONPATH=src python -m robloxlx.cli metal-test` — BLOCKED. Before LLVM 18 installation, `MTLCreateSystemDefaultDevice()` returned nil. After installation, mldr terminated with SIGSEGV during framework initialization, before the fixture entered main. Coredump PID 121392 included a native NVIDIA driver thread; the log warned about absent validation layers and unwritable `/Users` shader cache.
+- `VK_DRIVER_FILES=/usr/share/vulkan/icd.d/lvp_icd.json PYTHONPATH=src python -m robloxlx.cli metal-test` — BLOCKED; also SIGSEGV before main. Coredump PID 121646 included Lavapipe worker threads. This comparison does not establish the exact crash cause. Buffer allocation/blit/readback and window presentation remain NOT TESTED.
+- `PYTHONPATH=src python -m unittest discover -s tests/unit` — PASS; 22 tests, zero skips, including real Darling write/exit execution, Mach-O compilation/preflight for the Metal and network fixtures, and an exact LLVM soname dependency check.
+- `PYTHONPATH=src python -m robloxlx.cli doctor` — PASS; exact dependency reported `darling_metal_host_llvm: libLLVM-18.so=FOUND` from the installed Iridium binary, without starting Darling.
+- `python -m pip wheel . --no-deps --no-build-isolation -w /tmp/robloxlx-wheels` — PASS; wheel built and its archive inspected to confirm all three original fixture sources are included. No Darling or third-party source is bundled in the wheel.
+- Existing Vulkan host presentation test passed three Wayland frames on the RTX 2060 SUPER. No fixture calls an OpenGL API. Host Vulkan presentation does not demonstrate Darling Metal compatibility.
+- Roblox executable, client window, account and gameplay — NOT TESTED.
+
 ## 2026-10-11 (Darling runtime installation check)
 
 - `pacman -Q darling-cli-release-local` — PASS; local package version `20260609-1` is installed.

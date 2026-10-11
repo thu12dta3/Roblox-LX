@@ -161,8 +161,23 @@ def _stop_process_group(process: subprocess.Popen) -> None:
         process.wait()
 
 
-def test_darling_runtime() -> DarlingSmokeResult:
-    """Compile and run the bundled Mach-O syscall probe in a disposable prefix."""
+def test_darling_runtime(log_path: Path | None = None) -> DarlingSmokeResult:
+    """Compile and run the independent libSystem write/exit probe."""
+    return _test_fixture("macho_hello.s", "ROBLOXLX_MACHO_OK", "_start", [], log_path)
+
+
+def test_metal_runtime(log_path: Path | None = None) -> DarlingSmokeResult:
+    """Exercise real Metal buffer commands; does not prove window presentation."""
+    return _test_fixture("macho_metal.c", "ROBLOXLX_METAL_BUFFER_OK", "_main", ["Metal"], log_path)
+
+
+def test_network_runtime(log_path: Path | None = None) -> DarlingSmokeResult:
+    """Check real Darwin DNS and TCP loopback without any Roblox traffic."""
+    return _test_fixture("macho_network.c", "ROBLOXLX_NETWORK_OK", "_main", [], log_path)
+
+
+def _test_fixture(source_name: str, marker: str, entry: str, frameworks: list[str],
+                  log_path: Path | None) -> DarlingSmokeResult:
     runtime = detect_darling()
     if runtime is None:
         return DarlingSmokeResult(False, "Darling NOT FOUND; no process started")
@@ -171,7 +186,10 @@ def test_darling_runtime() -> DarlingSmokeResult:
     clang, linker = shutil.which("clang"), shutil.which("ld64.lld")
     if not clang or not linker:
         return DarlingSmokeResult(False, "clang and ld64.lld are required to build the local Mach-O test")
-    source = Path(__file__).parent / "fixtures" / "macho_hello.s"
+    sysroot = runtime.executable.parent.parent / "libexec/darling"
+    if not (sysroot / "usr/lib/libSystem.B.dylib").is_file():
+        return DarlingSmokeResult(False, f"Darling libSystem runtime NOT FOUND under {sysroot}")
+    source = Path(__file__).parent / "fixtures" / source_name
     with tempfile.TemporaryDirectory(prefix="robloxlx-darling-smoke-") as folder:
         root = Path(folder)
         obj, executable = root / "hello.o", root / "hello"
@@ -182,25 +200,55 @@ def test_darling_runtime() -> DarlingSmokeResult:
             )
             if compile_result.returncode:
                 return DarlingSmokeResult(False, f"Clang failed: {compile_result.stderr.strip()[:300]}")
+            framework_args = ["-F", str(sysroot / "System/Library/Frameworks"), "-lobjc"] if frameworks else []
+            for framework in frameworks:
+                framework_args.extend(["-framework", framework])
             link_result = subprocess.run(  # nosec B603 -- fixed local object and argv, no shell
-                [linker, "-arch", "x86_64", "-platform_version", "macos", "10.15", "10.15",
-                 "-e", "_start", "-o", str(executable), str(obj)],
+                [linker, "-arch", "x86_64", "-platform_version", "macos", "11.0", "11.0",
+                 "-e", entry, "-syslibroot", str(sysroot), "-lSystem", *framework_args,
+                 "-o", str(executable), str(obj)],
                 capture_output=True, text=True, timeout=20, check=False,
             )
             if link_result.returncode:
                 return DarlingSmokeResult(False, f"ld64.lld failed: {link_result.stderr.strip()[:300]}")
-            prefix = root / "dprefix"
-            prefix.mkdir(mode=0o700)
-            log = root / "darling.log"
-            status = run_darling(runtime, executable, [], log, prefix=prefix, timeout=30)
-            output = log.read_text(encoding="utf-8", errors="replace") if log.exists() else ""
-            if status != 0 or "ROBLOXLX_MACHO_OK" not in output:
+            # Keep the prefix outside the disposable build directory: Darling
+            # creates root-owned overlay files which cannot be removed safely
+            # by an unprivileged test. Preserve them for diagnosis, never sudo-rm.
+            prefix_root = Path(tempfile.mkdtemp(prefix="robloxlx-darling-prefix-"))
+            prefix = prefix_root / "dprefix"
+            environment = os.environ.copy()
+            environment["DPREFIX"] = str(prefix)
+            # An empty pre-created directory makes Darling skip setupPrefix().
+            # Initialize only this isolated test prefix through its own launcher.
+            initialized = subprocess.run(  # nosec B603 -- fixed launcher command, isolated probe prefix
+                [str(runtime.executable), "--version"], env=environment,
+                capture_output=True, text=True, timeout=10, check=False,
+            )
+            if initialized.returncode or not prefix.is_dir():
+                return DarlingSmokeResult(False, f"Darling probe prefix initialization failed: {initialized.stderr.strip()}")
+            log = log_path if log_path is not None else root / "darling.log"
+            log_offset = log.stat().st_size if log.exists() else 0
+            try:
+                status = run_darling(runtime, executable, [], log, prefix=prefix, timeout=30)
+            finally:
+                try:
+                    stopped = subprocess.run(  # nosec B603 -- stops only the server belonging to the isolated probe prefix
+                        [str(runtime.executable), "shutdown"], env=environment,
+                        capture_output=True, text=True, timeout=5, check=False,
+                    )
+                    shutdown_detail = f"exit {stopped.returncode}: {stopped.stderr.strip()}"
+                except (OSError, subprocess.TimeoutExpired) as exc:
+                    shutdown_detail = f"UNKNOWN: {exc}"
+                with log.open("a", encoding="utf-8") as stream:
+                    stream.write(f"Probe shutdown {shutdown_detail}; retained prefix: {prefix}\n")
+            output = log.read_bytes()[log_offset:].decode("utf-8", errors="replace") if log.exists() else ""
+            if status != 0 or marker not in output:
                 tail = "\n".join(output.splitlines()[-12:]).strip()
-                detail = f"Mach-O syscall probe failed (exit {status})"
+                detail = f"macOS API probe failed (exit {status})"
                 if tail:
                     detail += f"; Darling output:\n{tail}"
                 return DarlingSmokeResult(False, detail)
-            return DarlingSmokeResult(True, "Mach-O executable ran and Darwin syscalls returned the expected marker")
+            return DarlingSmokeResult(True, f"Independent macOS executable returned {marker}")
         except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
             return DarlingSmokeResult(False, f"Darling smoke test failed: {exc}")
 

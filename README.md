@@ -4,13 +4,15 @@
 
 ## Objetivo e estado
 
-Investigar a execução do cliente desktop macOS original através da camada de tradução de APIs Darling, diretamente no Linux e sem Android, VM ou emulação de um sistema operacional convidado. ROBLOX-LX não baixa, altera ou injeta código no executável. O host encontra o launcher Darling, mas o pacote local instalado não contém o helper `darlingserver`; o teste Mach-O independente falha antes de executar o fixture. A execução do Roblox continua **UNKNOWN**.
+Investigar a execução do cliente desktop macOS original através da camada de tradução de APIs Darling, diretamente no Linux e sem Android, VM ou emulação de um sistema operacional convidado. ROBLOX-LX não baixa, altera ou injeta código no executável. O teste Mach-O independente já executou com sucesso pelo Darling instalado. O teste de DNS/TCP loopback também passou. Metal ainda provoca SIGSEGV na inicialização do runtime; a execução do Roblox continua **UNKNOWN**.
 
 ## CLI implementada
 
 - `robloxlx doctor`: detecta distribuição, sessão gráfica, GPU, driver, extensões Vulkan de superfície, runtime Darling e ferramentas/bibliotecas para áudio, entrada e rede. O diagnóstico não inicia Darling nem altera o sistema. O caminho gráfico do projeto é Vulkan-only; OpenGL/Zink não são usados como fallback.
 - `robloxlx graphics-test`: abre `vkcube` por alguns frames com WSI Wayland ou XCB, registra a GPU selecionada e comprova apresentação Vulkan independente do Roblox.
-- `robloxlx darling-test`: compila e executa um fixture Mach-O inofensivo numa pasta temporária e DPREFIX isolado; prova apenas carregamento e syscalls Darwin básicos.
+- `robloxlx darling-test`: compila e executa um fixture Mach-O que chama `write` e `exit` pela `libSystem` real do Darling; captura log permanente e encerra o servidor do prefixo isolado. Prova carregamento e essas duas APIs.
+- `robloxlx network-test`: executa resolução de localhost e uma troca TCP loopback inteiramente dentro do fixture macOS; preserva o log. Não acessa serviços Roblox.
+- `robloxlx metal-test`: compila um Mach-O independente que tenta criar um dispositivo Metal, buffer e comando blit, verificando 256 bytes após sua conclusão. Registra a primeira API que falha. Não comprova apresentação de janela.
 - `robloxlx launch --program /caminho/Roblox.app [-- argumentos]`: lê `Contents/Info.plist`, confirma o executável Mach-O x86_64 do bundle e só então o chama pelo Darling instalado. Também aceita o caminho direto do executável. Captura stdout/stderr em `~/.local/state/robloxlx/logs/darling-launch.log` e recolhe o processo. `--prefix` seleciona um prefixo Darling existente. Sem `--prefix`, o próprio Darling pode inicializar o prefixo padrão no primeiro uso.
 - `robloxlx launch --dry-run --program ...`: mostra o comando e não inicia processo.
 - `robloxlx compatibility`, `logs`, `self-test`, `cleanup`, `verify` e `version`.
@@ -35,8 +37,9 @@ Darling e sondas de host são dependências opcionais e nunca instaladas pelo CL
 |---|---|
 | CLI, descoberta de dependências e gestão de processo Darling | IMPLEMENTADO; coberto por testes unitários |
 | Vulkan host swapchain render | TESTADO com `vkcube` e a GPU física do host; não valida o caminho macOS/Metal de Darling |
-| Gráficos do cliente macOS por Metal→Vulkan em Darling, Vulkan-only | BLOCKED; falta apresentação de janela Metal por Vulkan sem OpenGL |
-| Binário Mach-O x86_64 independente | Fixture compila; execução real **BLOCKED**: launcher instalado sem `darlingserver`, processo não inicia |
+| Gráficos macOS por Metal→Vulkan em Darling, Vulkan-only | BLOCKED; crash na inicialização Metal com NVIDIA e Lavapipe; apresentação de janela não testada |
+| Binário Mach-O x86_64 independente | PASS: execução real por Darling com `write`/`exit` e marcador esperado |
+| DNS e TCP loopback por Darling | PASS com buffers de endereço em `accept`; variante NULL falhou; rede Roblox UNKNOWN |
 | Cliente macOS oficial Roblox em Darling | UNKNOWN; nenhuma cópia foi adquirida ou executada |
 | Hyperion e partida multiplayer | UNKNOWN; não testados |
 | Adaptações que modificam o cliente ou suas verificações | BLOCKED por política do projeto |

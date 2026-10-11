@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import platform
+import re
 import shutil
 import subprocess  # nosec B404 -- used only with fixed, read-only probe arguments
 from ctypes.util import find_library
@@ -89,6 +90,26 @@ def _os_name() -> str:
     return platform.system() or "UNKNOWN"
 
 
+def _probe_darling_metal_llvm(executable: Path | None) -> str:
+    """Read Iridium's exact host LLVM library name without starting Darling."""
+    if executable is None:
+        return "UNKNOWN (Darling NOT FOUND)"
+    iridium = executable.parent.parent / "libexec/darling/usr/lib/darling/libiridium.dylib"
+    try:
+        names = sorted(set(re.findall(rb"libLLVM-[0-9]+\.so(?:\.[0-9]+)*", iridium.read_bytes())))
+    except OSError:
+        return "UNKNOWN (Iridium library not found)"
+    if not names:
+        return "UNKNOWN (LLVM soname not identified)"
+    results = []
+    for raw in names:
+        name = raw.decode("ascii")
+        lookup = name.removeprefix("lib").split(".so", 1)[0]
+        found = find_library(lookup)
+        results.append(f"{name}={'FOUND' if found else 'NOT FOUND'}")
+    return "; ".join(results)
+
+
 def collect_diagnostics() -> dict[str, str]:
     """Collect only host metadata and command availability; never change the system."""
     session = "Wayland" if os.environ.get("WAYLAND_DISPLAY") else (
@@ -115,6 +136,7 @@ def collect_diagnostics() -> dict[str, str]:
         "vulkan": vk or ("UNKNOWN (vulkaninfo present; no summary fields returned)" if shutil.which("vulkaninfo") else "UNKNOWN"),
         "host_vulkan_wsi_extensions": _probe_vulkan_wsi(session),
         "darling_macos_runtime": darling.version if darling else "NOT FOUND",
+        "darling_metal_host_llvm": _probe_darling_metal_llvm(darling.executable if darling else None),
         "vulkan_graphics_tools": ", ".join(name for name in ("vulkaninfo", "vkcube") if shutil.which(name)) or "UNKNOWN",
         "darling_audio_tools": ", ".join(name for name in ("pw-cat", "pacat", "pactl") if shutil.which(name)) or "UNKNOWN",
         "darling_input_tools": ", ".join(name for name in ("xinput", "libinput") if shutil.which(name)) or "UNKNOWN",

@@ -1,10 +1,17 @@
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
-from robloxlx.diagnostics import _probe_vulkan_wsi, collect_diagnostics
+from robloxlx.diagnostics import _probe_vulkan_wsi, _probe_darling_metal_llvm, collect_diagnostics
 
 
 class DiagnosticsTests(unittest.TestCase):
+    def test_llvm_probe_requires_the_runtime_soname_instead_of_a_newer_version(self):
+        with patch("robloxlx.diagnostics.Path.read_bytes", return_value=b"libLLVM-18.so\0libLLVM-18.so\0"), \
+             patch("robloxlx.diagnostics.find_library", return_value=None) as find:
+            self.assertEqual(_probe_darling_metal_llvm(Path("/usr/bin/darling")), "libLLVM-18.so=NOT FOUND")
+            find.assert_called_once_with("LLVM-18")
+
     @patch("robloxlx.diagnostics.shutil.which", return_value=None)
     @patch("robloxlx.diagnostics.platform.release", return_value="test-kernel")
     @patch("robloxlx.diagnostics.platform.machine", return_value="x86_64")

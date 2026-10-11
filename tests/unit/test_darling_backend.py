@@ -126,14 +126,14 @@ class DarlingBackendTests(unittest.TestCase):
 class DarlingIndependentExecutableTests(unittest.TestCase):
     """Build a real Mach-O fixture, then run it only if Darling is installed."""
 
-    def _build_fixture(self, root: Path) -> Path:
+    def _build_fixture(self, root: Path, fixture_name="macho_hello.s", entry="_start") -> Path:
         clang = shutil.which("clang")
         linker = shutil.which("ld64.lld")
         if not clang or not linker:
             self.skipTest("local Clang and ld64.lld Mach-O build tools are required")
-        # The fixture uses only Darwin's write/exit syscalls; no SDK or third-
-        # party source is linked into the independent compatibility probe.
-        fixture = Path(__file__).parents[2] / "src/robloxlx/compatibility/fixtures/macho_hello.s"
+        # This compile-only preflight does not require a Darling installation.
+        # Runtime testing below links the real Darling libSystem implementation.
+        fixture = Path(__file__).parents[2] / "src/robloxlx/compatibility/fixtures" / fixture_name
         obj, executable = root / "hello.o", root / "hello"
         subprocess_result = subprocess.run(
             [clang, "-target", "x86_64-apple-macos10.15", "-c", str(fixture), "-o", str(obj)],
@@ -142,7 +142,7 @@ class DarlingIndependentExecutableTests(unittest.TestCase):
         self.assertEqual(subprocess_result.returncode, 0, subprocess_result.stderr)
         subprocess_result = subprocess.run(
             [linker, "-arch", "x86_64", "-platform_version", "macos", "10.15", "10.15",
-             "-e", "_start", "-o", str(executable), str(obj)],
+             "-e", entry, "-undefined", "dynamic_lookup", "-o", str(executable), str(obj)],
             capture_output=True, text=True, check=False,
         )
         self.assertEqual(subprocess_result.returncode, 0, subprocess_result.stderr)
@@ -160,18 +160,18 @@ class DarlingIndependentExecutableTests(unittest.TestCase):
             self.skipTest("Darling runtime is not installed")
         if not Path(darling).with_name("darlingserver").is_file():
             self.skipTest("Darling launcher is installed without its darlingserver helper")
+        result = darling_runtime_smoke()
+        self.assertTrue(result.passed, result.detail)
+
+    def test_metal_fixture_compiles_for_macos(self):
         with tempfile.TemporaryDirectory() as folder:
-            root = Path(folder)
-            executable = self._build_fixture(root)
-            prefix = root / "dprefix"
-            prefix.mkdir(mode=0o700)
-            from robloxlx.compatibility.darling import run_darling
-            status = run_darling(
-                DarlingRuntime(Path(darling).resolve(), "detected"), executable, [], root / "run.log",
-                prefix=prefix, timeout=30,
-            )
-            self.assertEqual(status, 0)
-            self.assertIn("ROBLOXLX_MACHO_OK", (root / "run.log").read_text())
+            executable = self._build_fixture(Path(folder), "macho_metal.c", "_main")
+            self.assertEqual(resolve_macos_executable(executable), executable.resolve())
+
+    def test_network_fixture_compiles_for_macos(self):
+        with tempfile.TemporaryDirectory() as folder:
+            executable = self._build_fixture(Path(folder), "macho_network.c", "_main")
+            self.assertEqual(resolve_macos_executable(executable), executable.resolve())
 
 
 if __name__ == "__main__":

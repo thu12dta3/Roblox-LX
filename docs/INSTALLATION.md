@@ -20,3 +20,7 @@ Após instalar Darling, confirme o runtime com `robloxlx doctor` e execute `robl
 No host, o teste gráfico direto Vulkan é `robloxlx graphics-test --frames 3`. Requer `vkcube`, uma sessão Wayland/X11 ativa e uma GPU Vulkan integrada ou discreta. Não usa OpenGL/Zink e testa a apresentação Linux Vulkan, não Metal/Darling.
 
 **Atenção ao prefixo:** se `--prefix` for omitido, Darling pode criar/inicializar `~/.darling` ao primeiro uso. Para evitar isso, passe um DPREFIX já existente com `--prefix /caminho`. O backend não cria, apaga nem migra prefixos por conta própria.
+
+Os comandos explícitos de teste são uma exceção: inicializam seu próprio prefixo isolado via launcher Darling e chamam `darling shutdown` ao terminar. O diretório de build é removido; os prefixos `/tmp/robloxlx-darling-prefix-*` são preservados porque Darling cria arquivos de overlay como root. O CLI não tenta removê-los com sudo. Logs persistem em `darling-test.log` e `metal-test.log` na pasta de logs do usuário.
+
+`robloxlx metal-test` testa APIs Metal com um executável independente, sem Roblox. A release Ubuntu usada no pacote local depende de `libLLVM-18.so` para Iridium; o host Arch precisa dessa versão exata (pacote `llvm18-libs`). Uma biblioteca LLVM de outra versão não deve ser renomeada para satisfazer essa dependência. A presença do framework Metal e de Vulkan no host não comprova que o dispositivo Metal é criado.

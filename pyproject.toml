@@ -16,3 +16,6 @@ robloxlx = "robloxlx.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"robloxlx.compatibility" = ["fixtures/*.s", "fixtures/*.c"]

@@ -13,7 +13,7 @@ from pathlib import Path
 from robloxlx import __version__
 from robloxlx.compatibility.darling import (
     build_darling_command, detect_darling, resolve_macos_executable, run_darling,
-    test_darling_runtime,
+    test_darling_runtime, test_metal_runtime, test_network_runtime,
 )
 from robloxlx.diagnostics import collect_diagnostics
 from robloxlx.graphics.vulkan import run_vulkan_smoke
@@ -141,9 +141,12 @@ def command_graphics_test(args: argparse.Namespace) -> int:
 
 
 def command_darling_test(_: argparse.Namespace) -> int:
-    result = test_darling_runtime()
+    log = _state_dir() / "darling-test.log"
+    result = test_darling_runtime(log)
     print(f"Darling independent Mach-O test: {'PASS' if result.passed else 'BLOCKED'}")
     print(result.detail)
+    if log.exists():
+        print(f"Log: {log}")
     return EXIT_OK if result.passed else EXIT_BLOCKED
 
 
@@ -151,6 +154,27 @@ def command_self_test(_: argparse.Namespace) -> int:
     suite = unittest.defaultTestLoader.discover("tests/unit")
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     return EXIT_OK if result.wasSuccessful() else EXIT_ERROR
+
+
+def command_metal_test(_: argparse.Namespace) -> int:
+    log = _state_dir() / "metal-test.log"
+    result = test_metal_runtime(log)
+    print(f"Darling Metal buffer test: {'PASS' if result.passed else 'BLOCKED'}")
+    print(result.detail)
+    if log.exists():
+        print(f"Log: {log}")
+    print("macOS window presentation and Roblox: UNKNOWN")
+    return EXIT_OK if result.passed else EXIT_BLOCKED
+
+
+def command_network_test(_: argparse.Namespace) -> int:
+    log = _state_dir() / "network-test.log"
+    result = test_network_runtime(log)
+    print(f"Darling DNS/TCP loopback test: {'PASS' if result.passed else 'BLOCKED'}")
+    print(result.detail)
+    if log.exists():
+        print(f"Log: {log}")
+    return EXIT_OK if result.passed else EXIT_BLOCKED
 
 
 def command_cleanup(_: argparse.Namespace) -> int:
@@ -177,6 +201,8 @@ def build_parser() -> argparse.ArgumentParser:
         "logs": (command_logs, "List ROBLOX-LX log files."),
         "graphics-test": (command_graphics_test, "Run a standalone Vulkan-only GPU/window smoke test."),
         "darling-test": (command_darling_test, "Build and run a standalone macOS syscall executable in a temporary Darling prefix."),
+        "metal-test": (command_metal_test, "Build and run independent Metal buffer commands through Darling."),
+        "network-test": (command_network_test, "Test macOS DNS and TCP loopback through Darling."),
         "self-test": (command_self_test, "Run the local unit test suite."),
         "cleanup": (command_cleanup, "Remove only ROBLOX-LX temporary cache files."),
     }

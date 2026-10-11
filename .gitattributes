@@ -1,0 +1,3 @@
+
+# Unified patches contain whitespace-only context lines and original indentation.
+packaging/darling-metal/*.patch -whitespace

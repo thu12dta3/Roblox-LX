@@ -12,3 +12,11 @@ Initialize the Darling header submodules: corefoundation (including swift-coreli
 Run `bash packaging/darling-metal/build.sh METAL_SOURCE DARLING_SOURCE INDIUM_SOURCE OUTPUT_DIRECTORY`. The script checks revisions, applies the patch, compiles all Metal translation units and links against the installed runtime. It never installs packages or replaces system files. Use `robloxlx metal-test --metal-library OUTPUT_DIRECTORY/Metal` to execute the independent GPU buffer test. Build requires Clang, LLD, the installed Darling runtime, and its exact LLVM 18 dependency. Tested target: x86_64. Other targets and GPU models remain UNKNOWN.
 
 The framework uses its output path as its Mach-O install name, so moving it requires rebuilding. No DYLD injection or client binary patch is used. Window presentation, Metal shader coverage and Roblox compatibility are not established by the buffer test.
+
+## macOS Vulkan window fixture
+
+Pass the fifth argument `src/robloxlx/compatibility/fixtures/macho_window.mm` to `build.sh` to build `OUTPUT_DIRECTORY/window-probe` as well. It uses native SDL only through Darling's ELF loader interface; SDL2 or SDL2-compat must be installed by the user. No SDL or Indium source is bundled in the fixture or wheel.
+
+`robloxlx window-test --executable OUTPUT_DIRECTORY/window-probe --wsi wayland` selects the Wayland instance extension and SDL driver for this subprocess. Use `--wsi x11` for X11/XWayland. The patched Metal initialization enables only the requested WSI extension plus VK_KHR_surface. The existing offscreen Metal test retains its original extension set. These settings do not change system configuration.
+
+See `docs/VULKAN_WINDOW.md` for the complete implementation boundary and executed evidence.

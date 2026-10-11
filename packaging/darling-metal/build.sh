@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Build the separate MPL-2.0 Metal runtime; no installation or client changes.
 set -euo pipefail
-if (( $# != 4 )); then
-  echo 'Usage: build.sh METAL_SOURCE DARLING_SOURCE INDIUM_SOURCE OUTPUT_DIRECTORY' >&2
+if (( $# < 4 || $# > 5 )); then
+  echo 'Usage: build.sh METAL_SOURCE DARLING_SOURCE INDIUM_SOURCE OUTPUT_DIRECTORY [WINDOW_PROBE_SOURCE]' >&2
   exit 2
 fi
 metal_src=$(realpath "$1")
@@ -38,3 +38,11 @@ clang++ -target x86_64-apple-darwin -mmacosx-version-min=11.0 -fuse-ld=lld -isys
   -F /usr/libexec/darling/System/Library/Frameworks -L /usr/libexec/darling/usr/lib/darling \
   -lindium -framework Foundation -lobjc -lc++ -lc++abi
 sha256sum "$output_dir/Metal"
+
+if (( $# == 5 )); then
+  clang++ "${flags[@]}" -I "$darling_src/src/startup/mldr/elfcalls" -c "$(realpath "$5")" -o "$output_dir/window-probe.o"
+  clang++ -target x86_64-apple-darwin -mmacosx-version-min=11.0 -fuse-ld=lld -isysroot /usr/libexec/darling \
+    -o "$output_dir/window-probe" "$output_dir/window-probe.o" "$output_dir/Metal" \
+    -F /usr/libexec/darling/System/Library/Frameworks -L /usr/libexec/darling/usr/lib/darling \
+    -lindium -framework Foundation -lobjc -lc++ -lc++abi
+fi

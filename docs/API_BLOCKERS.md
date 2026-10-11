@@ -45,3 +45,7 @@ Os resultados anteriores de crash permanecem como histórico. O teste atual com 
 | AppKit / CAMetalLayer apresentação | Janela e frames por Vulkan | Não implementado/testado; integração upstream envolve OpenGL | QuartzCore/CAMetalDrawable upstream; adaptador Vulkan de apresentação ainda ausente | BLOCKED para Vulkan-only atual |
 
 O patch é distribuído separadamente em `packaging/darling-metal/metal-vulkan.patch` sob MPL-2.0, preservando os avisos. O framework do sistema não foi substituído.
+
+## Atualização: WSI independente
+
+O fixture `macho_window.mm` criou superfícies e swapchains reais Wayland e X11/XWayland, usando o mesmo dispositivo da API Metal, e apresentou 30 frames por Vulkan. A identificação interna do buffer precisou validar RTTI antes do cast; falha inicial e correção estão descritas em `VULKAN_WINDOW.md`. A integração `NSWindow/NSView/CAMetalLayer` permanece pendente. O resultado WSI não remove esse bloqueio e não comprova execução do Roblox.

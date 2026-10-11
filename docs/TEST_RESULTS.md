@@ -1,5 +1,19 @@
 # Test results
 
+## 2026-10-11 (real macOS Vulkan window presentation)
+
+- Pinned-source `packaging/darling-metal/build.sh` compiled every Metal translation unit and the original Objective-C++ window fixture, linking both successfully. Framework SHA-256 for this output path: `0c193958407b2db959c81c37ade2012e1533fa3ffd0f6e18081a8fcdce90d86b`. One non-fatal Clang warning reports the evaluated `typeid(*shared_ptr)` expression; this is intentional runtime type verification.
+- `window-test --executable work/metal-window/window-probe --wsi wayland` — PASS, exit 0; real SDL Wayland window, NVIDIA surface and swapchain, Metal GPU fill, complete source-buffer verification, 30 successful Vulkan presentations at 640×480 and clean Metal teardown.
+- Same command with `--wsi x11` — PASS, exit 0, X11/XWayland surface/swapchain and 30 presentations.
+- Fresh final build integration: `ROBLOXLX_WINDOW_PROBE="$PWD/work/metal-window-final/window-probe" PYTHONPATH=src python -m unittest discover -s tests/unit -v` — PASS; **32 tests in 7.057s, zero skips**. Includes real Wayland and X11 executions, success/teardown/shutdown markers, log mode 0600, and orchestration/preflight tests. On headless CI without the explicit fixture, these two real WSI integration tests skip; that is not compatibility evidence.
+- `metal-test --metal-library work/metal-window-final/Metal` — PASS, exit 0; offscreen buffer fill/copy regression after adding optional WSI extensions.
+- Initial WSI variants exited 1/SIGSEGV in the fixture's PrivateBuffer access. Added markers showed surface/swapchain were already created. `dynamic_pointer_cast` unexpectedly returned null although runtime type name is Indium::PrivateBuffer. Guarded type verification followed by the internal static cast removed the null dereference. RTTI mismatch cause remains UNKNOWN.
+- `git diff --check`, `bash -n packaging/darling-metal/build.sh packaging/arch/PKGBUILD` — PASS. Proprietary LICENSE SHA-256 unchanged: `92fc7402ff4ecf0c9392f3760dc7bd603cb5b6a3090998a0a5514a8cbcc718ef`. GitHub repository visibility verified PRIVATE.
+- `python -m pip wheel . --no-deps --no-build-isolation -w work/wheels-window` — PASS; archive inspected and all four original fixtures included, including `macho_window.mm`. No runtime binary or third-party implementation source bundled.
+- Native host SDL dependency versions: sdl2-compat 2.32.74-1 / sdl3 3.4.18-1. No package or system setting changed in this iteration.
+- Source GPU buffer bytes are verified; displayed compositor pixels are not captured/read back. Public NSWindow/NSView/CAMetalLayer integration, shader/render pipeline coverage, Roblox and gameplay remain UNKNOWN.
+
+
 ## 2026-10-11 (corrected Metal source build)
 
 - Independent macOS Metal executable linked to the separately built framework — PASS, exit 0. Real RTX 2060 SUPER device name, 256-byte GPU fill, GPU copy to a second buffer, command status 4, and complete byte comparison. Runtime teardown markers confirm polling stopped and teardown completed. ICD selected: `/usr/share/vulkan/icd.d/nvidia_icd.json`. No OpenGL API used by this probe.

@@ -10,6 +10,27 @@ index 431f29a..547e73f 100644
  		src/Metal/MTLCaptureManager.mm
  		src/Metal/MTLCommandBuffer.mm
  		src/Metal/MTLCommandQueue.mm
+diff --git a/include/Metal/MTLCommandBuffer.h b/include/Metal/MTLCommandBuffer.h
+index ef43df8..fc33c88 100644
+--- a/include/Metal/MTLCommandBuffer.h
++++ b/include/Metal/MTLCommandBuffer.h
+@@ -16,6 +16,7 @@ METAL_DECLARATIONS_BEGIN
+ @protocol MTLComputeCommandEncoder;
+ @protocol MTLCommandQueue;
+ @protocol MTLRenderCommandEncoder;
++@protocol MTLBlitCommandEncoder;
+ 
+ @class MTLComputePassDescriptor;
+ @class MTLRenderPassDescriptor;
+@@ -30,6 +31,8 @@ typedef void (^MTLCommandBufferHandler)(id<MTLCommandBuffer>);
+ @protocol MTLCommandBuffer <NSObject>
+ 
+ @property(readonly) id<MTLCommandQueue> commandQueue;
++@property(readonly) NSUInteger status;
++- (id<MTLBlitCommandEncoder>)blitCommandEncoder;
+ @property (readonly) id<MTLDevice> device;
+ @property(nullable, copy, atomic) NSString* label;
+ 
 diff --git a/include/Metal/Metal.h b/include/Metal/Metal.h
 index 3c63a1d..6701608 100644
 --- a/include/Metal/Metal.h
@@ -177,18 +198,19 @@ index f58184a..82a7ee8 100644
                               options: (MTLResourceOptions)options
  {
 diff --git a/src/Metal/Metal.mm b/src/Metal/Metal.mm
-index dfe5174..5d95826 100644
+index dfe5174..9784860 100644
 --- a/src/Metal/Metal.mm
 +++ b/src/Metal/Metal.mm
-@@ -4,6 +4,7 @@
+@@ -4,6 +4,8 @@
  #import <Metal/Metal.h>
  #if DARLING_METAL_ENABLED
  #include <indium/indium.hpp>
 +#include <atomic>
++#include <cstring>
  #endif
  #import <Metal/MTLDeviceInternal.h>
  #import <Metal/stubs.h>
-@@ -22,6 +23,9 @@ static const char* additionalExtensions[] = {
+@@ -22,6 +24,9 @@ static const char* additionalExtensions[] = {
  	//"VK_KHR_swapchain",
  };
  
@@ -198,10 +220,21 @@ index dfe5174..5d95826 100644
  __attribute__((constructor))
  static void initMetal(void) {
  	bool enableValidation = false;
-@@ -31,12 +35,19 @@ static void initMetal(void) {
+@@ -30,13 +35,29 @@ static void initMetal(void) {
+ 		enableValidation = true;
  	}
  
- 	Indium::init(additionalExtensions, sizeof(additionalExtensions) / sizeof(*additionalExtensions), enableValidation);
+-	Indium::init(additionalExtensions, sizeof(additionalExtensions) / sizeof(*additionalExtensions), enableValidation);
++	const char* wsi = getenv("ROBLOXLX_METAL_WSI");
++    if (wsi && strcmp(wsi, "x11") == 0) {
++        const char* extensions[] = { "VK_KHR_surface", "VK_KHR_xlib_surface" };
++        Indium::init(extensions, 2, enableValidation);
++    } else if (wsi && strcmp(wsi, "wayland") == 0) {
++        const char* extensions[] = { "VK_KHR_surface", "VK_KHR_wayland_surface" };
++        Indium::init(extensions, 2, enableValidation);
++    } else {
++        Indium::init(additionalExtensions, sizeof(additionalExtensions) / sizeof(*additionalExtensions), enableValidation);
++    }
 +    // Stop the polling thread before Indium's C++ static device list is
 +    // destroyed by __cxa_finalize. Dyld's module terminators run too late.
 +    if (atexit(finitMetal) != 0) abort();

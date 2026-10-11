@@ -17,11 +17,11 @@ class VulkanSmokeResult:
 
 def run_vulkan_smoke(frames: int = 3, timeout: float = 30.0) -> VulkanSmokeResult:
     """Run the system vkcube Vulkan renderer for a bounded number of frames."""
+    if not 1 <= frames <= 1000:
+        raise ValueError("frames must be between 1 and 1000")
     executable = shutil.which("vkcube")
     if not executable:
         return VulkanSmokeResult(False, "UNKNOWN", "vkcube NOT FOUND")
-    if not 1 <= frames <= 1000:
-        raise ValueError("frames must be between 1 and 1000")
     if os.environ.get("WAYLAND_DISPLAY"):
         wsi = "wayland"
     elif os.environ.get("DISPLAY"):

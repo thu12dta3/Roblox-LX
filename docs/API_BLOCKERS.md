@@ -4,7 +4,7 @@
 
 `darling` não foi encontrado no PATH deste host durante a execução. Assim, nenhuma observação dinâmica sobre APIs macOS no Darling instalado pode ser declarada. Todas as linhas marcadas UNKNOWN exigem execução no Darling correspondente ou um programa de teste independente. O inventário do MacOBlox abaixo serve para direcionar testes, não como confirmação independente de comportamento.
 
-Darling também depende de infraestrutura do host além do executável do runtime. O [guia oficial do shell Darling](https://docs.darlinghq.org/darling-shell.html) informa que `darling shell` carrega o módulo de kernel e inicializa o prefixo caso necessário; executar esse primeiro uso cruza o limite de sistema e cria o prefixo padrão. Nenhuma dessas ações foi feita. O host inspecionado tem headers para o kernel atual, mas não tem o runtime nem o módulo `darling-mach` instalado/carregado.
+O projeto Darling atual usa o servidor de kernel em espaço de usuário (`darlingserver`), conforme o [README oficial](https://github.com/darlinghq/darling) e o histórico do [release oficial](https://github.com/darlinghq/darling/releases/tag/v0.1.20260608). Uma página antiga da documentação ainda menciona o módulo de kernel. O artefato oficial Ubuntu contém um launcher host que exige modo setuid root para criar namespaces e mounts; isso torna a instalação uma alteração administrativa. O runtime ainda não está instalado. A busca anterior por `darling-mach` e headers não é um requisito do Darling atual e foi removida do diagnóstico.
 
 | Área / API | Comportamento esperado | Comportamento observado aqui | Implementação / evidência | Estado |
 |---|---|---|---|---|

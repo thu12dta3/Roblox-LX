@@ -31,6 +31,13 @@ class DarlingBackendTests(unittest.TestCase):
     def test_missing_darling_is_reported(self, _which):
         self.assertIsNone(detect_darling())
 
+    @patch("robloxlx.compatibility.darling.shutil.which", return_value="/usr/bin/darling")
+    @patch("robloxlx.compatibility.darling.subprocess.run", side_effect=AssertionError("must not execute Darling"))
+    def test_discovery_does_not_start_runtime(self, _run, _which):
+        found = detect_darling()
+        self.assertEqual(found.executable, Path("/usr/bin/darling"))
+        self.assertIn("NOT QUERIED", found.version)
+
     def test_builds_shell_free_command_and_maps_host_path(self):
         with tempfile.TemporaryDirectory() as folder:
             program = Path(folder) / "hello app"

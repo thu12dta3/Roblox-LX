@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from robloxlx.diagnostics import _probe_darling_kernel_support, _probe_vulkan_wsi, collect_diagnostics
+from robloxlx.diagnostics import _probe_vulkan_wsi, collect_diagnostics
 
 
 class DiagnosticsTests(unittest.TestCase):
@@ -39,19 +39,6 @@ GPU0:
     @patch("robloxlx.diagnostics.shutil.which", return_value=None)
     def test_vulkan_wsi_is_unknown_without_vulkaninfo(self, _which):
         self.assertEqual(_probe_vulkan_wsi("Wayland"), "UNKNOWN (vulkaninfo NOT FOUND)")
-
-    @patch("robloxlx.diagnostics.shutil.which", return_value=None)
-    @patch("robloxlx.diagnostics.Path.exists", return_value=False)
-    def test_kernel_probe_reports_unknown_module_without_modinfo(self, _exists, _which):
-        self.assertEqual(
-            _probe_darling_kernel_support(),
-            ("NOT FOUND", "UNKNOWN (modinfo NOT FOUND; module not loaded)"),
-        )
-
-    @patch("robloxlx.diagnostics.Path.exists", return_value=True)
-    def test_loaded_darling_module_is_reported_read_only(self, _exists):
-        self.assertEqual(_probe_darling_kernel_support()[1], "LOADED")
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -30,23 +30,16 @@ class DarlingSmokeResult:
     detail: str
 
 
-def detect_darling(timeout: float = 3.0) -> DarlingRuntime | None:
-    """Find Darling and read its version, returning UNKNOWN if its probe fails."""
+def detect_darling() -> DarlingRuntime | None:
+    """Locate Darling without executing it or initializing a default prefix."""
     resolved = shutil.which("darling")
     if not resolved:
         return None
     executable = Path(resolved).resolve()
-    try:
-        result = subprocess.run(  # nosec B603 -- fixed version probe, no shell
-            [str(executable), "--version"], capture_output=True, text=True,
-            timeout=timeout, check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired):
-        return DarlingRuntime(executable, "VERSION UNKNOWN")
-    lines = (result.stdout or result.stderr).strip().splitlines()
-    # Some versions do not implement --version. Presence is still useful, but
-    # do not launch a shell here because it can create the default DPREFIX.
-    return DarlingRuntime(executable, lines[0][:160] if lines else "VERSION UNKNOWN")
+    # Darling's launcher may create a prefix and perform privileged namespace
+    # setup even for unsupported arguments, so discovery must remain a PATH
+    # lookup. The isolated darling-test command performs the first execution.
+    return DarlingRuntime(executable, "VERSION NOT QUERIED (runtime not started)")
 
 
 def host_path_to_darling(path: Path) -> str:

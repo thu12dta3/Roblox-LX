@@ -8,7 +8,7 @@ Investigar a execução do cliente desktop macOS original através da camada de 
 
 ## CLI implementada
 
-- `robloxlx doctor`: detecta distribuição, sessão gráfica, GPU, driver, extensões Vulkan de superfície do host, Darling e ferramentas/bibliotecas para áudio, entrada e rede. O caminho gráfico do projeto é Vulkan-only; OpenGL/Zink não são usados como fallback.
+- `robloxlx doctor`: detecta distribuição, sessão gráfica, GPU, driver, extensões Vulkan de superfície, runtime/kernel module/headers do Darling e ferramentas/bibliotecas para áudio, entrada e rede. O diagnóstico não carrega módulos nem altera o sistema. O caminho gráfico do projeto é Vulkan-only; OpenGL/Zink não são usados como fallback.
 - `robloxlx graphics-test`: abre `vkcube` por alguns frames com WSI Wayland ou XCB, registra a GPU selecionada e comprova apresentação Vulkan independente do Roblox.
 - `robloxlx darling-test`: compila e executa um fixture Mach-O inofensivo numa pasta temporária e DPREFIX isolado; prova apenas carregamento e syscalls Darwin básicos.
 - `robloxlx launch --program /caminho/Roblox.app [-- argumentos]`: lê `Contents/Info.plist`, confirma o executável Mach-O x86_64 do bundle e só então o chama pelo Darling instalado. Também aceita o caminho direto do executável. Captura stdout/stderr em `~/.local/state/robloxlx/logs/darling-launch.log` e recolhe o processo. `--prefix` seleciona um prefixo Darling existente. Sem `--prefix`, o próprio Darling pode inicializar o prefixo padrão no primeiro uso.

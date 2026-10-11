@@ -4,6 +4,8 @@
 
 `darling` não foi encontrado no PATH deste host durante a execução. Assim, nenhuma observação dinâmica sobre APIs macOS no Darling instalado pode ser declarada. Todas as linhas marcadas UNKNOWN exigem execução no Darling correspondente ou um programa de teste independente. O inventário do MacOBlox abaixo serve para direcionar testes, não como confirmação independente de comportamento.
 
+Darling também depende de infraestrutura do host além do executável do runtime. O [guia oficial do shell Darling](https://docs.darlinghq.org/darling-shell.html) informa que `darling shell` carrega o módulo de kernel e inicializa o prefixo caso necessário; executar esse primeiro uso cruza o limite de sistema e cria o prefixo padrão. Nenhuma dessas ações foi feita. O host inspecionado tem headers para o kernel atual, mas não tem o runtime nem o módulo `darling-mach` instalado/carregado.
+
 | Área / API | Comportamento esperado | Comportamento observado aqui | Implementação / evidência | Estado |
 |---|---|---|---|---|
 | Runtime / Mach-O loader | Iniciar executável Mach-O x86_64 e devolver status/saída do processo | Runtime `darling`: NOT FOUND; fixture local compila e tem magic `cffaedfe`, mas não foi executado | `src/robloxlx/compatibility/darling.py`; `src/robloxlx/compatibility/fixtures/macho_hello.s`; testes `DarlingIndependentExecutableTests.test_macho_hello_fixture_compiles_and_is_detected` (build) e `test_macho_hello_executes_under_darling` (runtime) | BLOCKED por dependência ausente |

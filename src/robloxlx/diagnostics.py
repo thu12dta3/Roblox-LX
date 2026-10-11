@@ -79,6 +79,30 @@ def _probe_vulkan_wsi(session: str) -> str:
     return "; ".join(f"{name}={'FOUND' if name in available else 'NOT FOUND'}" for name in names)
 
 
+def _probe_darling_kernel_support() -> tuple[str, str]:
+    """Read kernel header/module readiness without loading or changing anything."""
+    release = platform.release()
+    headers = Path("/lib/modules") / release / "build"
+    headers_status = "FOUND" if headers.exists() else "NOT FOUND"
+    if Path("/sys/module/darling_mach").exists():
+        module_status = "LOADED"
+    else:
+        modinfo = shutil.which("modinfo")
+        if not modinfo:
+            module_status = "UNKNOWN (modinfo NOT FOUND; module not loaded)"
+        else:
+            try:
+                result = subprocess.run(  # nosec B603 -- fixed, read-only kernel module metadata query
+                    [modinfo, "-F", "filename", "darling-mach"],
+                    capture_output=True, text=True, timeout=3.0, check=False,
+                )
+            except (OSError, subprocess.TimeoutExpired):
+                module_status = "UNKNOWN (modinfo query failed)"
+            else:
+                module_status = "AVAILABLE (not loaded)" if result.returncode == 0 else "NOT FOUND"
+    return headers_status, module_status
+
+
 def _os_name() -> str:
     try:
         for line in Path("/etc/os-release").read_text(encoding="utf-8").splitlines():
@@ -105,6 +129,7 @@ def collect_diagnostics() -> dict[str, str]:
         "X11/WSI": "X11", "XInput2": "Xi", "Wayland/WSI": "wayland-client",
     }
     library_status = [f"{label}={'FOUND' if find_library(name) else 'NOT FOUND'}" for label, name in libraries.items()]
+    kernel_headers, darling_kernel = _probe_darling_kernel_support()
     return {
         "distribution": _os_name(),
         "kernel": platform.release() or "UNKNOWN",
@@ -115,6 +140,8 @@ def collect_diagnostics() -> dict[str, str]:
         "vulkan": vk or ("UNKNOWN (vulkaninfo present; no summary fields returned)" if shutil.which("vulkaninfo") else "UNKNOWN"),
         "host_vulkan_wsi_extensions": _probe_vulkan_wsi(session),
         "darling_macos_runtime": darling.version if darling else "NOT FOUND",
+        "darling_kernel_build_headers": kernel_headers,
+        "darling_kernel_module": darling_kernel,
         "vulkan_graphics_tools": ", ".join(name for name in ("vulkaninfo", "vkcube") if shutil.which(name)) or "UNKNOWN",
         "darling_audio_tools": ", ".join(name for name in ("pw-cat", "pacat", "pactl") if shutil.which(name)) or "UNKNOWN",
         "darling_input_tools": ", ".join(name for name in ("xinput", "libinput") if shutil.which(name)) or "UNKNOWN",

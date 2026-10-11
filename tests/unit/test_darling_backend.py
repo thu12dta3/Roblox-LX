@@ -69,6 +69,19 @@ class DarlingBackendTests(unittest.TestCase):
                 plistlib.dump({"CFBundleExecutable": "TestPlayer"}, output)
             self.assertEqual(resolve_macos_executable(bundle), executable.resolve())
 
+    def test_rejects_app_bundle_executable_outside_bundle(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            bundle = root / "Test.app"
+            contents = bundle / "Contents"
+            (contents / "MacOS").mkdir(parents=True)
+            outside = root / "outside"
+            _make_macho(outside)
+            with (contents / "Info.plist").open("wb") as output:
+                plistlib.dump({"CFBundleExecutable": "../../outside"}, output)
+            with self.assertRaisesRegex(ValueError, "safe CFBundleExecutable"):
+                resolve_macos_executable(bundle)
+
     def test_process_capture_and_private_log(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

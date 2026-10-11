@@ -15,7 +15,7 @@ Para instalar o CLI como pacote Arch local, use `packaging/arch/PKGBUILD` a part
 
 O PKGBUILD inclui apenas o CLI, documentação e licença proprietária; não instala Darling, Roblox, GPU drivers ou pacotes de sistema. Instale o pacote local com o gerenciador Arch somente após revisar o artefato. Darling deve ser instalado separadamente por fonte que você confie. ROBLOX-LX não roda `pacman`, não usa `sudo` e não modifica configurações globais.
 
-Após instalar Darling, confirme o runtime com `robloxlx doctor`. Use um programa macOS independente primeiro. O comando de execução aceita `robloxlx launch --program /caminho/binario --dry-run` para inspecionar o plano sem iniciar processo. Para iniciar de fato, remova `--dry-run`; logs ficam em `$XDG_STATE_HOME/robloxlx/logs` ou `~/.local/state/robloxlx/logs`.
+Após instalar Darling, confirme o runtime com `robloxlx doctor` e execute `robloxlx darling-test`. Esse teste compila um Mach-O local com syscalls Darwin básicos e usa um DPREFIX temporário; não usa Roblox nem sua conta. Use um programa macOS independente em seguida. O comando de execução aceita `robloxlx launch --program /caminho/App.app --dry-run` para validar o bundle e inspecionar o plano sem iniciar processo. Para iniciar de fato, remova `--dry-run`; logs ficam em `$XDG_STATE_HOME/robloxlx/logs` ou `~/.local/state/robloxlx/logs`.
 
 No host, o teste gráfico direto Vulkan é `robloxlx graphics-test --frames 3`. Requer `vkcube`, uma sessão Wayland/X11 ativa e uma GPU Vulkan integrada ou discreta. Não usa OpenGL/Zink e testa a apresentação Linux Vulkan, não Metal/Darling.
 

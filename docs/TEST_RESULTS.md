@@ -4,7 +4,7 @@
 
 Recorded after executing the commands in this section:
 
-- `python -m unittest discover -s tests/unit` — first attempt without the source tree importable failed with three `ModuleNotFoundError: robloxlx` collection errors. Latest `PYTHONPATH=src python -m unittest discover -s tests/unit` passed 14 tests; 1 integration test skipped because Darling is absent.
+- `python -m unittest discover -s tests/unit` — first attempt without the source tree importable failed with three `ModuleNotFoundError: robloxlx` collection errors. Latest `PYTHONPATH=src python -m unittest discover -s tests/unit` passed 15 tests; 1 integration test skipped because Darling is absent. The new app-bundle traversal case confirms an `Info.plist` executable path cannot escape its `.app` directory.
 - `PYTHONPATH=src python -m robloxlx.cli doctor` — PASS; Garuda Linux, x86_64, kernel 7.2.9-zen1-1-zen, Wayland, RTX 2060 SUPER, driver 615.71.09; Vulkan 1.4.351 on NVIDIA and 1.4.354 on llvmpipe; Darling NOT FOUND. Vulkan, PipeWire/PulseAudio, X11/XInput2/Wayland host libraries found; `vkcube`, `vulkaninfo`, `pw-cat`, `pacat`, `pactl`, `libinput`, `getent`, and `resolvectl` detected. Diagnostics do not probe OpenGL.
 - `PYTHONPATH=src python -m robloxlx.cli graphics-test --frames 3` — PASS; `vkcube` presented three Wayland swapchain frames on NVIDIA GeForce RTX 2060 SUPER (`PHYSICAL_DEVICE_TYPE_DISCRETE_GPU`). It used Vulkan directly and did not use OpenGL. This tests host presentation only, not Darling's macOS Metal window path.
 - `PYTHONPATH=src python -m robloxlx.cli compatibility` — PASS; Darling NOT FOUND and Roblox/gameplay UNKNOWN.

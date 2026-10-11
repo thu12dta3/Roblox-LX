@@ -6,7 +6,7 @@
 
 | Área / API | Comportamento esperado | Comportamento observado aqui | Implementação / evidência | Estado |
 |---|---|---|---|---|
-| Runtime / Mach-O loader | Iniciar executável Mach-O x86_64 e devolver status/saída do processo | Runtime `darling`: NOT FOUND; fixture local compila e tem magic `cffaedfe`, mas não foi executado | `src/robloxlx/compatibility/darling.py`; `tests/unit/fixtures/macho_hello.s`; integração `test_macho_hello_executable` | BLOCKED por dependência ausente |
+| Runtime / Mach-O loader | Iniciar executável Mach-O x86_64 e devolver status/saída do processo | Runtime `darling`: NOT FOUND; fixture local compila e tem magic `cffaedfe`, mas não foi executado | `src/robloxlx/compatibility/darling.py`; `src/robloxlx/compatibility/fixtures/macho_hello.s`; testes `DarlingIndependentExecutableTests.test_macho_hello_fixture_compiles_and_is_detected` (build) e `test_macho_hello_executes_under_darling` (runtime) | BLOCKED por dependência ausente |
 | Prefixo DPREFIX | Usar prefixo existente selecionado pelo usuário | Não exercitado porque Darling ausente | `run_darling(..., prefix=...)`; integração usa DPREFIX temporário se Darling existir | UNKNOWN |
 | OpenGL / EGL | Não faz parte da rota de gráficos solicitada | `robloxlx graphics-test` chama `vkcube` com WSI Vulkan; não consulta GL/EGL | `src/robloxlx/graphics/vulkan.py` | OUT OF SCOPE; sem fallback |
 | Vulkan host / swapchain | Obter GPU física, criar swapchain WSI e apresentar frames | `vkcube --wsi wayland --c 2` selecionou NVIDIA RTX 2060 SUPER e saiu com status 0 | `src/robloxlx/graphics/vulkan.py`; testado no host | PASS (host only) |

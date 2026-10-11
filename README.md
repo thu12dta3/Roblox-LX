@@ -1,14 +1,14 @@
 # ROBLOX-LX
 
-**Bannaman6655 Productions** — private, proprietary Linux compatibility research project. ROBLOX-LX is not affiliated with Roblox Corporation.
+**Bannaman6655 Productions** — private project seeking a native Linux Roblox client. ROBLOX-LX is not affiliated with Roblox Corporation.
 
 ## Purpose and current state
 
-This project investigates whether the official desktop client can run on Linux through a transparent compatibility layer. The current release is an early diagnostic CLI foundation. It does not install, modify, or launch Roblox. Roblox's support documentation currently says Linux is unsupported. A third-party Darling project, MacOBlox, publicly reports running the macOS client, but its described implementation includes compatibility shims loaded into the game. That path is outside this project's stated no-client-modification policy. See [feasibility](docs/FEASIBILITY.md) and [risks](docs/RISKS.md).
+The goal is to play Roblox normally through a **native Linux desktop client**, without a virtual machine, emulator, or operating-system API translation layer. The current release is only an early diagnostic CLI foundation; it does not install or launch Roblox. Roblox's official requirements currently list Linux as unsupported. Until Roblox provides a native Linux client or an official interface that permits one, native Linux execution is BLOCKED. See [feasibility](docs/FEASIBILITY.md) and [risks](docs/RISKS.md).
 
 ## Implemented
 
-- `robloxlx doctor`: read-only host, graphics-tool, NVIDIA and Darling probes.
+- `robloxlx doctor`: read-only host and graphics-tool probes.
 - `robloxlx verify`: optional SHA-256 measurement for a user-configured local file; no official trust baseline is bundled.
 - `robloxlx compatibility`: reports current known limitations.
 - `robloxlx launch --dry-run`: reports readiness and never starts a process.
@@ -32,10 +32,9 @@ Optional host probes are `nvidia-smi`, `lspci`, `glxinfo`, and `vulkaninfo`. Mis
 
 | Capability | Status | Evidence |
 |---|---|---|
-| Linux support by Roblox | BLOCKED | Roblox Support lists Linux as unsupported. |
-| Darling runtime detection | PARTIAL | CLI can detect the command; no backend lifecycle support yet. |
-| Roblox macOS client architecture/framework requirements | UNKNOWN | No official app bundle has been inspected in this project. |
-| Roblox launch using ROBLOX-LX policy | BLOCKED | No no-modification backend validated; no real client test performed. |
+| Native Linux Roblox client | BLOCKED | Roblox Support lists Linux as unsupported; no official Linux client is available to this project. |
+| VM, emulator, or OS API translation | OUT OF SCOPE | Explicitly excluded by the project goal. |
+| Roblox launch | BLOCKED | Requires an official native Linux client or official Roblox-supported interface. |
 | Games, rendering, audio, input, multiplayer | UNKNOWN | No real-client or game test performed. |
 
 Never interpret a local hash as proof that a binary is official. Do not supply account passwords to ROBLOX-LX. Do not disable or bypass anti-cheat mechanisms.

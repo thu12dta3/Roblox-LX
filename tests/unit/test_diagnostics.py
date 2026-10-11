@@ -13,7 +13,7 @@ class DiagnosticsTests(unittest.TestCase):
         self.assertEqual(result["kernel"], "test-kernel")
         self.assertEqual(result["architecture"], "x86_64")
         self.assertEqual(result["gpu"], "UNKNOWN")
-        self.assertEqual(result["darling"], "NOT FOUND")
+        self.assertNotIn("darling", result)
 
 
 if __name__ == "__main__":

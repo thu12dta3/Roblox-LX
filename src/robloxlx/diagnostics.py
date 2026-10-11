@@ -64,8 +64,6 @@ def collect_diagnostics() -> dict[str, str]:
         gpu = _run(["lspci", "-nn", "-d", "::0300"])
     gl = _run_matching(["glxinfo", "-B"], ("opengl vendor", "opengl renderer", "opengl version"))
     vk = _run_matching(["vulkaninfo", "--summary"], ("apiversion", "devicename", "drivername"))
-    darling = shutil.which("darling")
-    darling_version = _run(["darling", "--version"]) if darling else None
     return {
         "distribution": _os_name(),
         "kernel": platform.release() or "UNKNOWN",
@@ -75,6 +73,5 @@ def collect_diagnostics() -> dict[str, str]:
         "nvidia_driver": _run(["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"]) or "UNKNOWN",
         "opengl": gl or ("UNKNOWN (glxinfo present; no summary fields returned)" if shutil.which("glxinfo") else "UNKNOWN"),
         "vulkan": vk or ("UNKNOWN (vulkaninfo present; no summary fields returned)" if shutil.which("vulkaninfo") else "UNKNOWN"),
-        "darling": darling_version or ("PRESENT; VERSION UNKNOWN" if darling else "NOT FOUND"),
         "dependencies": ", ".join(name for name in ("glxinfo", "vulkaninfo", "nvidia-smi", "lspci") if shutil.which(name)) or "NONE OF OPTIONAL PROBES FOUND",
     }

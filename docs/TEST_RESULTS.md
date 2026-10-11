@@ -10,4 +10,6 @@ Commands run locally:
 - `PYTHONPATH=src python -m robloxlx.cli compatibility` — PASS; reported official Linux support BLOCKED and runtime capabilities unvalidated.
 - `PYTHONPATH=src python -m robloxlx.cli launch --dry-run` — PASS as a safe refusal; readiness reported BLOCKED and no process started (exit 2 is the expected blocked status).
 
-No Roblox runtime, Darling macOS executable, graphics rendering, audio, input, multiplayer, or game test has been performed. GitHub Actions workflows are configured but have not run at the time of this report.
+GitHub Actions `Tests`, `Lint` (compile check), and `Security checks` workflows all passed on pull request #1. The checks ran for both the branch push and pull request event.
+
+No Roblox runtime, Darling macOS executable, graphics rendering, audio, input, multiplayer, or game test has been performed.

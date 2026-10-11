@@ -14,6 +14,7 @@ Recorded after executing the commands in this section:
 - Vulkan selection and software-device rejection unit tests — PASS.
 - `PYTHONPATH=src python -m compileall -q src tests/unit` — PASS.
 - `git diff --check` — PASS.
+- GitHub Actions on follow-up PR #3 after fixes — Tests PASS, Lint PASS, Security checks PASS. The first CI run exposed a frame-count validation test ordering bug, which was fixed before the passing run. The earlier Security checks failure was fixed by adding narrow explanations to shell-free subprocess calls.
 - Arch packaging metadata: `(cd packaging/arch && makepkg --printsrcinfo)` and `bash -n PKGBUILD` — PASS; package installation/build was not run.
 - Standalone Mach-O fixture — `clang -target x86_64-apple-macos10.15` and `ld64.lld` both succeeded; `file` reported Mach-O 64-bit x86_64 executable and magic `cffaedfe`.
 - Actual Mach-O execution through Darling — BLOCKED because `darling` is not installed. The integration test is present and skips unless Darling, Clang and ld64.lld are available.

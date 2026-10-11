@@ -13,7 +13,7 @@ from pathlib import Path
 from robloxlx import __version__
 from robloxlx.compatibility.darling import (
     build_darling_command, detect_darling, resolve_macos_executable, run_darling,
-    test_darling_runtime, test_metal_runtime, test_network_runtime,
+    test_darling_runtime, test_metal_runtime, test_network_runtime, test_window_runtime, test_public_window_runtime,
 )
 from robloxlx.diagnostics import collect_diagnostics
 from robloxlx.graphics.vulkan import run_vulkan_smoke
@@ -156,9 +156,10 @@ def command_self_test(_: argparse.Namespace) -> int:
     return EXIT_OK if result.wasSuccessful() else EXIT_ERROR
 
 
-def command_metal_test(_: argparse.Namespace) -> int:
+def command_metal_test(args: argparse.Namespace) -> int:
     log = _state_dir() / "metal-test.log"
-    result = test_metal_runtime(log)
+    result = test_metal_runtime(log, driver=Path(args.vulkan_driver) if args.vulkan_driver else None,
+                                library=Path(args.metal_library) if args.metal_library else None)
     print(f"Darling Metal buffer test: {'PASS' if result.passed else 'BLOCKED'}")
     print(result.detail)
     if log.exists():
@@ -190,6 +191,30 @@ def command_cleanup(_: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def command_window_test(args: argparse.Namespace) -> int:
+    log = _state_dir() / "window-test.log"
+    result = test_window_runtime(Path(args.executable), log,
+                                 driver=Path(args.vulkan_driver) if args.vulkan_driver else None,
+                                 wsi=args.wsi)
+    print(f"macOS Vulkan WSI test: {'PASS' if result.passed else 'BLOCKED'}")
+    print(result.detail)
+    print(f"Log: {log}")
+    print("AppKit/CAMetalLayer and Roblox: UNKNOWN")
+    return EXIT_OK if result.passed else EXIT_BLOCKED
+
+
+def command_window_api_test(args: argparse.Namespace) -> int:
+    log = _state_dir() / "window-api-test.log"
+    result = test_public_window_runtime(Path(args.executable), log,
+                                        driver=Path(args.vulkan_driver) if args.vulkan_driver else None,
+                                        wsi=args.wsi)
+    print(f"Limited macOS window/layer API test: {'PASS' if result.passed else 'BLOCKED'}")
+    print(result.detail)
+    print(f"Log: {log}")
+    print("Complete AppKit/QuartzCore and Roblox: UNKNOWN")
+    return EXIT_OK if result.passed else EXIT_BLOCKED
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="robloxlx", description="ROBLOX-LX compatibility diagnostics")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -202,6 +227,8 @@ def build_parser() -> argparse.ArgumentParser:
         "graphics-test": (command_graphics_test, "Run a standalone Vulkan-only GPU/window smoke test."),
         "darling-test": (command_darling_test, "Build and run a standalone macOS syscall executable in a temporary Darling prefix."),
         "metal-test": (command_metal_test, "Build and run independent Metal buffer commands through Darling."),
+        "window-api-test": (command_window_api_test, "Test the separately built NSWindow/CAMetalLayer implementation."),
+        "window-test": (command_window_test, "Run the independently built macOS Metal/Vulkan window fixture."),
         "network-test": (command_network_test, "Test macOS DNS and TCP loopback through Darling."),
         "self-test": (command_self_test, "Run the local unit test suite."),
         "cleanup": (command_cleanup, "Remove only ROBLOX-LX temporary cache files."),
@@ -214,6 +241,14 @@ def build_parser() -> argparse.ArgumentParser:
     sub.choices["launch"].add_argument("--prefix", help="Use this existing Darling prefix (never created by ROBLOX-LX).")
     sub.choices["launch"].add_argument("program_args", nargs=argparse.REMAINDER, help="Arguments passed after --program PATH.")
     sub.choices["graphics-test"].add_argument("--frames", type=int, default=3, help="Frames to present (1-1000).")
+    sub.choices["metal-test"].add_argument("--vulkan-driver", help="Use this ICD manifest for the independent Metal test; default selects physical hardware.")
+    sub.choices["metal-test"].add_argument("--metal-library", help="Link the independent fixture against this source-built Metal implementation.")
+    sub.choices["window-test"].add_argument("--executable", required=True, help="Source-built independent window-probe Mach-O.")
+    sub.choices["window-test"].add_argument("--vulkan-driver", help="Physical Vulkan ICD manifest.")
+    sub.choices["window-test"].add_argument("--wsi", choices=("wayland", "x11"), default="wayland")
+    sub.choices["window-api-test"].add_argument("--executable", required=True, help="Source-built public-window-probe Mach-O.")
+    sub.choices["window-api-test"].add_argument("--vulkan-driver", help="Physical Vulkan ICD manifest.")
+    sub.choices["window-api-test"].add_argument("--wsi", choices=("wayland", "x11"), default="wayland")
     version = sub.add_parser("version", help="Show version.")
     version.set_defaults(handler=lambda _: print(f"ROBLOX-LX {__version__}") or EXIT_OK)
     return parser

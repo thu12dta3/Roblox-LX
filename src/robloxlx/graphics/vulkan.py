@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
+from pathlib import Path
 import shutil
 import subprocess  # nosec B404 -- fixed native Vulkan smoke executable
 
@@ -13,6 +14,42 @@ class VulkanSmokeResult:
     passed: bool
     device: str
     detail: str
+
+
+def select_hardware_vulkan_environment(preferred: Path | None = None) -> dict[str, str]:
+    """Select a real hardware ICD for one process, preserving user overrides."""
+    if preferred is not None:
+        manifest = preferred.expanduser().resolve(strict=True)
+        if not manifest.is_file():
+            raise ValueError(f"Vulkan driver manifest is not a file: {manifest}")
+        return {"VK_DRIVER_FILES": str(manifest)}
+    if os.environ.get("VK_DRIVER_FILES") or os.environ.get("VK_ICD_FILENAMES"):
+        return {}
+    executable = shutil.which("vulkaninfo")
+    if not executable:
+        raise ValueError("Vulkan driver selection requires vulkaninfo or an explicit driver manifest")
+    manifests = sorted(Path("/usr/share/vulkan/icd.d").glob("*.json"),
+                       key=lambda path: ("nvidia" not in path.name.lower(), path.name))
+    integrated = None
+    for manifest in manifests:
+        environment = os.environ.copy()
+        environment["VK_DRIVER_FILES"] = str(manifest)
+        try:
+            result = subprocess.run(  # nosec B603 -- fixed read-only Vulkan probe with system ICD manifests
+                [executable, "--summary"], env=environment,
+                capture_output=True, text=True, timeout=5, check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        if result.returncode:
+            continue
+        if "PHYSICAL_DEVICE_TYPE_DISCRETE_GPU" in result.stdout:
+            return {"VK_DRIVER_FILES": str(manifest)}
+        if "PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU" in result.stdout and integrated is None:
+            integrated = manifest
+    if integrated is not None:
+        return {"VK_DRIVER_FILES": str(integrated)}
+    raise ValueError("No physical Vulkan driver found; no software or OpenGL fallback selected")
 
 
 def run_vulkan_smoke(frames: int = 3, timeout: float = 30.0) -> VulkanSmokeResult:

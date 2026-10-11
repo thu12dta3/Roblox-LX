@@ -16,6 +16,7 @@ import signal
 import struct
 import subprocess  # nosec B404 -- fixed probes and explicit, shell-free argv
 import tempfile
+from robloxlx.graphics.vulkan import select_hardware_vulkan_environment
 
 
 @dataclass(frozen=True)
@@ -166,9 +167,11 @@ def test_darling_runtime(log_path: Path | None = None) -> DarlingSmokeResult:
     return _test_fixture("macho_hello.s", "ROBLOXLX_MACHO_OK", "_start", [], log_path)
 
 
-def test_metal_runtime(log_path: Path | None = None) -> DarlingSmokeResult:
+def test_metal_runtime(log_path: Path | None = None, *, driver: Path | None = None,
+                       library: Path | None = None) -> DarlingSmokeResult:
     """Exercise real Metal buffer commands; does not prove window presentation."""
-    return _test_fixture("macho_metal.c", "ROBLOXLX_METAL_BUFFER_OK", "_main", ["Metal"], log_path)
+    return _test_fixture("macho_metal.c", "ROBLOXLX_METAL_BUFFER_OK", "_main", ["Metal"], log_path,
+                         vulkan_driver=driver, metal_library=library)
 
 
 def test_network_runtime(log_path: Path | None = None) -> DarlingSmokeResult:
@@ -177,7 +180,8 @@ def test_network_runtime(log_path: Path | None = None) -> DarlingSmokeResult:
 
 
 def _test_fixture(source_name: str, marker: str, entry: str, frameworks: list[str],
-                  log_path: Path | None) -> DarlingSmokeResult:
+                  log_path: Path | None, *, vulkan_driver: Path | None = None,
+                  metal_library: Path | None = None) -> DarlingSmokeResult:
     runtime = detect_darling()
     if runtime is None:
         return DarlingSmokeResult(False, "Darling NOT FOUND; no process started")
@@ -194,6 +198,7 @@ def _test_fixture(source_name: str, marker: str, entry: str, frameworks: list[st
         root = Path(folder)
         obj, executable = root / "hello.o", root / "hello"
         try:
+            overrides = select_hardware_vulkan_environment(vulkan_driver) if "Metal" in frameworks else {}
             compile_result = subprocess.run(  # nosec B603 -- fixed local fixture and argv, no shell
                 [clang, "-target", "x86_64-apple-macos10.15", "-c", str(source), "-o", str(obj)],
                 capture_output=True, text=True, timeout=20, check=False,
@@ -202,7 +207,13 @@ def _test_fixture(source_name: str, marker: str, entry: str, frameworks: list[st
                 return DarlingSmokeResult(False, f"Clang failed: {compile_result.stderr.strip()[:300]}")
             framework_args = ["-F", str(sysroot / "System/Library/Frameworks"), "-lobjc"] if frameworks else []
             for framework in frameworks:
-                framework_args.extend(["-framework", framework])
+                if framework == "Metal" and metal_library is not None:
+                    replacement = metal_library.expanduser().resolve(strict=True)
+                    if not replacement.is_file():
+                        raise ValueError(f"Metal implementation library is not a file: {replacement}")
+                    framework_args.append(str(replacement))
+                else:
+                    framework_args.extend(["-framework", framework])
             link_result = subprocess.run(  # nosec B603 -- fixed local object and argv, no shell
                 [linker, "-arch", "x86_64", "-platform_version", "macos", "11.0", "11.0",
                  "-e", entry, "-syslibroot", str(sysroot), "-lSystem", *framework_args,
@@ -211,47 +222,84 @@ def _test_fixture(source_name: str, marker: str, entry: str, frameworks: list[st
             )
             if link_result.returncode:
                 return DarlingSmokeResult(False, f"ld64.lld failed: {link_result.stderr.strip()[:300]}")
-            # Keep the prefix outside the disposable build directory: Darling
-            # creates root-owned overlay files which cannot be removed safely
-            # by an unprivileged test. Preserve them for diagnosis, never sudo-rm.
-            prefix_root = Path(tempfile.mkdtemp(prefix="robloxlx-darling-prefix-"))
-            prefix = prefix_root / "dprefix"
-            environment = os.environ.copy()
-            environment["DPREFIX"] = str(prefix)
-            # An empty pre-created directory makes Darling skip setupPrefix().
-            # Initialize only this isolated test prefix through its own launcher.
-            initialized = subprocess.run(  # nosec B603 -- fixed launcher command, isolated probe prefix
-                [str(runtime.executable), "--version"], env=environment,
-                capture_output=True, text=True, timeout=10, check=False,
-            )
-            if initialized.returncode or not prefix.is_dir():
-                return DarlingSmokeResult(False, f"Darling probe prefix initialization failed: {initialized.stderr.strip()}")
             log = log_path if log_path is not None else root / "darling.log"
-            log_offset = log.stat().st_size if log.exists() else 0
-            try:
-                status = run_darling(runtime, executable, [], log, prefix=prefix, timeout=30)
-            finally:
-                try:
-                    stopped = subprocess.run(  # nosec B603 -- stops only the server belonging to the isolated probe prefix
-                        [str(runtime.executable), "shutdown"], env=environment,
-                        capture_output=True, text=True, timeout=5, check=False,
-                    )
-                    shutdown_detail = f"exit {stopped.returncode}: {stopped.stderr.strip()}"
-                except (OSError, subprocess.TimeoutExpired) as exc:
-                    shutdown_detail = f"UNKNOWN: {exc}"
-                with log.open("a", encoding="utf-8") as stream:
-                    stream.write(f"Probe shutdown {shutdown_detail}; retained prefix: {prefix}\n")
-            output = log.read_bytes()[log_offset:].decode("utf-8", errors="replace") if log.exists() else ""
-            if status != 0 or marker not in output:
-                tail = "\n".join(output.splitlines()[-12:]).strip()
-                detail = f"macOS API probe failed (exit {status})"
-                if tail:
-                    detail += f"; Darling output:\n{tail}"
-                return DarlingSmokeResult(False, detail)
-            return DarlingSmokeResult(True, f"Independent macOS executable returned {marker}")
+            return _run_independent_probe(runtime, executable, marker, log, overrides)
         except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
             return DarlingSmokeResult(False, f"Darling smoke test failed: {exc}")
 
+
+def test_window_runtime(executable: Path, log_path: Path, *, driver: Path | None = None,
+                        wsi: str = "wayland") -> DarlingSmokeResult:
+    return _test_window_probe(executable, log_path, driver=driver, wsi=wsi,
+                             marker="ROBLOXLX_MACOS_VULKAN_WINDOW_OK")
+
+
+def test_public_window_runtime(executable: Path, log_path: Path, *, driver: Path | None = None,
+                               wsi: str = "wayland") -> DarlingSmokeResult:
+    """Test the separately linked limited public window/layer implementation."""
+    return _test_window_probe(executable, log_path, driver=driver, wsi=wsi,
+                             marker="ROBLOXLX_PUBLIC_WINDOW_OK")
+
+
+def _test_window_probe(executable: Path, log_path: Path, *, driver: Path | None = None,
+                        wsi: str = "wayland", marker: str) -> DarlingSmokeResult:
+    """Run a source-built independent WSI fixture, not a Roblox executable."""
+    if wsi not in ("wayland", "x11"):
+        return DarlingSmokeResult(False, "WSI must be wayland or x11")
+    runtime = detect_darling()
+    if runtime is None or runtime.version.startswith("INCOMPLETE"):
+        return DarlingSmokeResult(False, "Complete Darling runtime NOT FOUND")
+    try:
+        target = resolve_macos_executable(executable)
+        overrides = select_hardware_vulkan_environment(driver)
+        overrides.update({"ROBLOXLX_METAL_WSI": wsi, "SDL_VIDEODRIVER": wsi})
+        return _run_independent_probe(runtime, target, marker, log_path, overrides)
+    except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
+        return DarlingSmokeResult(False, f"Darling WSI test failed: {exc}")
+
+
+def _run_independent_probe(runtime: DarlingRuntime, executable: Path, marker: str,
+                           log_path: Path, overrides: dict[str, str]) -> DarlingSmokeResult:
+    # Keep the prefix outside the disposable build directory: Darling
+    # creates root-owned overlay files which cannot be removed safely
+    # by an unprivileged test. Preserve them for diagnosis, never sudo-rm.
+    prefix_root = Path(tempfile.mkdtemp(prefix="robloxlx-darling-prefix-"))
+    prefix = prefix_root / "dprefix"
+    environment = os.environ.copy()
+    environment.update(overrides)
+    environment["DPREFIX"] = str(prefix)
+    # An empty pre-created directory makes Darling skip setupPrefix().
+    # Initialize only this isolated test prefix through its own launcher.
+    initialized = subprocess.run(  # nosec B603 -- fixed launcher command, isolated probe prefix
+        [str(runtime.executable), "--version"], env=environment,
+        capture_output=True, text=True, timeout=10, check=False,
+    )
+    if initialized.returncode or not prefix.is_dir():
+        return DarlingSmokeResult(False, f"Darling probe prefix initialization failed: {initialized.stderr.strip()}")
+    log = log_path
+    log_offset = log.stat().st_size if log.exists() else 0
+    try:
+        status = run_darling(runtime, executable, [], log, prefix=prefix, timeout=30,
+                             environment_overrides=overrides)
+    finally:
+        try:
+            stopped = subprocess.run(  # nosec B603 -- stops only the server belonging to the isolated probe prefix
+                [str(runtime.executable), "shutdown"], env=environment,
+                capture_output=True, text=True, timeout=5, check=False,
+            )
+            shutdown_detail = f"exit {stopped.returncode}: {stopped.stderr.strip()}"
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            shutdown_detail = f"UNKNOWN: {exc}"
+        with log.open("a", encoding="utf-8") as stream:
+            stream.write(f"Probe shutdown {shutdown_detail}; retained prefix: {prefix}\n")
+    output = log.read_bytes()[log_offset:].decode("utf-8", errors="replace") if log.exists() else ""
+    if status != 0 or marker not in output:
+        tail = "\n".join(output.splitlines()[-12:]).strip()
+        detail = f"macOS API probe failed (exit {status})"
+        if tail:
+            detail += f"; Darling output:\n{tail}"
+        return DarlingSmokeResult(False, detail)
+    return DarlingSmokeResult(True, f"Independent macOS executable returned {marker}")
 
 def run_darling(
     runtime: DarlingRuntime,
@@ -261,12 +309,15 @@ def run_darling(
     *,
     prefix: Path | None = None,
     timeout: float | None = None,
+    environment_overrides: dict[str, str] | None = None,
 ) -> int:
     """Run a local macOS program and stream combined output to a private log."""
     argv = build_darling_command(runtime, executable, arguments)
     log_path = log_path.expanduser()
     log_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     environment = os.environ.copy()
+    if environment_overrides:
+        environment.update(environment_overrides)
     if prefix is not None:
         resolved_prefix = prefix.expanduser().resolve(strict=True)
         if not resolved_prefix.is_dir():
@@ -275,6 +326,8 @@ def run_darling(
     with log_path.open("a", encoding="utf-8", errors="replace") as log:
         os.chmod(log_path, 0o600)
         log.write(f"Starting Darling process for {Path(executable).resolve()}\n")
+        if environment.get("VK_DRIVER_FILES"):
+            log.write(f"Vulkan driver: {environment['VK_DRIVER_FILES']}\n")
         log.flush()
         process = subprocess.Popen(  # nosec B603 -- explicit argv, user-selected program, no shell
             argv, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,

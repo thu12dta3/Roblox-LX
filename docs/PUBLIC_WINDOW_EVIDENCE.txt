@@ -1,0 +1,28 @@
+Actual successful CLI output, 2026-10-11. Wayland then X11, separate isolated prefixes. Absolute paths omitted.
+
+Vulkan driver: /usr/share/vulkan/icd.d/nvidia_icd.json
+PUBLIC_API_BEGIN:NSWindow.init
+PUBLIC_API_BEGIN:nextDrawable.render.present
+PUBLIC_API_RESIZED:320x240
+PUBLIC_API_ZERO_SIZE:nil drawable
+PUBLIC_API_UNSUPPORTED_OPTIONS:explicitly rejected
+PUBLIC_API_SECOND_WINDOW:rendered and closed
+PUBLIC_API_PRESENTED:60 frames via NSWindow/CAMetalLayer/Metal
+ROBLOXLX_PUBLIC_WINDOW_OK
+METAL_RUNTIME_TEARDOWN_BEGIN
+METAL_RUNTIME_POLLING_STOPPED
+METAL_RUNTIME_TEARDOWN_COMPLETE
+
+Vulkan driver: /usr/share/vulkan/icd.d/nvidia_icd.json
+PUBLIC_API_BEGIN:NSWindow.init
+PUBLIC_API_BEGIN:nextDrawable.render.present
+INDIUM_WSI_SUBOPTIMAL:frame presented
+PUBLIC_API_RESIZED:320x240
+PUBLIC_API_ZERO_SIZE:nil drawable
+PUBLIC_API_UNSUPPORTED_OPTIONS:explicitly rejected
+PUBLIC_API_SECOND_WINDOW:rendered and closed
+PUBLIC_API_PRESENTED:60 frames via NSWindow/CAMetalLayer/Metal
+ROBLOXLX_PUBLIC_WINDOW_OK
+METAL_RUNTIME_TEARDOWN_BEGIN
+METAL_RUNTIME_POLLING_STOPPED
+METAL_RUNTIME_TEARDOWN_COMPLETE

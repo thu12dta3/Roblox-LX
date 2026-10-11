@@ -1,5 +1,40 @@
 # Test results
 
+## 2026-10-11 (limited public macOS window/layer APIs)
+
+- New original runtime `runtime/window/LXWindow.mm` compiled and linked to the separately patched Metal and external 0BSD IndiumKit source. LXWindow SHA-256: `0df66a911cc8966412e7064766308275598b0f60f93ed5c858577dca73fae444`; independent fixture SHA-256: `97d3ddd90b60f4d2b44781f2085b610c913c4ceb851d9477401e61959b8e917b`.
+- `window-api-test` uses an original Mach-O fixture with calls to NSWindow/NSView/CAMetalLayer/Metal and no direct SDL/Vulkan calls. Wayland PASS; X11/XWayland PASS after IndiumKit presentation correction.
+- Final `ROBLOXLX_WINDOW_PROBE="$PWD/work/metal-window-final/window-probe" ROBLOXLX_PUBLIC_WINDOW_PROBE="$PWD/work/public-window-final/public-window-probe" PYTHONPATH=src python -m unittest discover -s tests/unit -v` — PASS; **36 tests in 12.727s, zero skips**. Four real WSI/public API integration tests ran on this host. CI without configured binaries/displays skips those tests.
+- Public fixture: 60 changing clear-color frames, texture dimensions checked before/after explicit resize 640x480 to 320x240, unique/increasing drawable IDs, second window render/close, repeated close, nil drawable for closed or zero-sized layer, explicit rejection of unsupported framebuffer/format options, actual command completion and complete Metal teardown. Displayed compositor pixels were not captured/read back.
+- Initial expanded suite: 36 tests ran, one failure in X11 due SIGABRT. Core mapped the abort to IndiumKit PrivateDrawable.present; upstream aborts for every result other than VK_SUCCESS. Accepting VK_SUBOPTIMAL_KHR and reporting other errors removed the abort; final integration passed. This initial failure is retained here rather than hidden.
+- Metal completion race corrected: Indium signals completion before invoking callbacks. MTLCommandBuffer.waitUntilCompleted now updates status from the confirmed wait before returning.
+- `metal-test --metal-library work/public-api-metal/Metal` — PASS, exit 0, real GPU fill/copy regression.
+- Python wheel build — PASS; archive inspected to confirm all five original fixtures, including `macho_public_window.mm`. Experimental runtime binaries and third-party implementation sources are not bundled in the wheel. Shell syntax, git diff checks and root LICENSE hash check — PASS.
+- No package installation, system framework replacement or client/account test performed. Full AppKit/QuartzCore ABI, input/event loop, compositor timing, general out-of-date recovery, shaders and Roblox remain UNKNOWN.
+
+
+## 2026-10-11 (real macOS Vulkan window presentation)
+
+- Pinned-source `packaging/darling-metal/build.sh` compiled every Metal translation unit and the original Objective-C++ window fixture, linking both successfully. Framework SHA-256 for this output path: `0c193958407b2db959c81c37ade2012e1533fa3ffd0f6e18081a8fcdce90d86b`. One non-fatal Clang warning reports the evaluated `typeid(*shared_ptr)` expression; this is intentional runtime type verification.
+- `window-test --executable work/metal-window/window-probe --wsi wayland` — PASS, exit 0; real SDL Wayland window, NVIDIA surface and swapchain, Metal GPU fill, complete source-buffer verification, 30 successful Vulkan presentations at 640×480 and clean Metal teardown.
+- Same command with `--wsi x11` — PASS, exit 0, X11/XWayland surface/swapchain and 30 presentations.
+- Fresh final build integration: `ROBLOXLX_WINDOW_PROBE="$PWD/work/metal-window-final/window-probe" PYTHONPATH=src python -m unittest discover -s tests/unit -v` — PASS; **32 tests in 7.057s, zero skips**. Includes real Wayland and X11 executions, success/teardown/shutdown markers, log mode 0600, and orchestration/preflight tests. On headless CI without the explicit fixture, these two real WSI integration tests skip; that is not compatibility evidence.
+- `metal-test --metal-library work/metal-window-final/Metal` — PASS, exit 0; offscreen buffer fill/copy regression after adding optional WSI extensions.
+- Initial WSI variants exited 1/SIGSEGV in the fixture's PrivateBuffer access. Added markers showed surface/swapchain were already created. `dynamic_pointer_cast` unexpectedly returned null although runtime type name is Indium::PrivateBuffer. Guarded type verification followed by the internal static cast removed the null dereference. RTTI mismatch cause remains UNKNOWN.
+- `git diff --check`, `bash -n packaging/darling-metal/build.sh packaging/arch/PKGBUILD` — PASS. Proprietary LICENSE SHA-256 unchanged: `92fc7402ff4ecf0c9392f3760dc7bd603cb5b6a3090998a0a5514a8cbcc718ef`. GitHub repository visibility verified PRIVATE.
+- `python -m pip wheel . --no-deps --no-build-isolation -w work/wheels-window` — PASS; archive inspected and all four original fixtures included, including `macho_window.mm`. No runtime binary or third-party implementation source bundled.
+- Native host SDL dependency versions: sdl2-compat 2.32.74-1 / sdl3 3.4.18-1. No package or system setting changed in this iteration.
+- Source GPU buffer bytes are verified; displayed compositor pixels are not captured/read back. Public NSWindow/NSView/CAMetalLayer integration, shader/render pipeline coverage, Roblox and gameplay remain UNKNOWN.
+
+
+## 2026-10-11 (corrected Metal source build)
+
+- Independent macOS Metal executable linked to the separately built framework — PASS, exit 0. Real RTX 2060 SUPER device name, 256-byte GPU fill, GPU copy to a second buffer, command status 4, and complete byte comparison. Runtime teardown markers confirm polling stopped and teardown completed. ICD selected: `/usr/share/vulkan/icd.d/nvidia_icd.json`. No OpenGL API used by this probe.
+- `PYTHONPATH=src python -m unittest discover -s tests/unit` — PASS; 25 tests, zero skips. Includes physical ICD selection, rejection of software-only devices and preservation of user overrides.
+- Reproducible build script compiled every Metal translation unit and linked successfully. Result SHA-256: `f94ed36f72d40c406e61e497c6526af5097ddeaa8bfa3adc51c4be8d29e38a03`. Running `metal-test --metal-library work/metal-reproducible/Metal` against that freshly rebuilt artifact — PASS, exit 0.
+- System Metal framework remains original; source build is tested through a normal link dependency of the independent executable. Window presentation, Roblox launch and gameplay remain UNKNOWN.
+
+
 ## 2026-10-11 (successful Darwin execution and real API probes)
 
 - Installed corrected local Darling package `20260609-2` through Konsole. `/usr/bin/darlingserver` is now present. Installed official Arch `llvm18-libs 18.1.8-2`, satisfying the `libLLVM-18.so` name embedded in the release's Iridium library; no LLVM library was renamed across versions.

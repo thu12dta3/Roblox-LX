@@ -11,7 +11,10 @@
 | Independent Mach-O fixture build and app preflight | PASS | Local executable is built and validated as x86_64 Mach-O; `.app` main executable is resolved from `Info.plist`; ELF and wrong architecture are rejected. |
 | Independent Mach-O execution under Darling | PASS | Installed Darling executed real libSystem write/exit calls and returned the expected marker with status 0. |
 | Darwin DNS and TCP loopback | PASS with limitation | `network-test` resolved localhost and transferred TCP bytes with accept address output buffers. `accept(fd, NULL, NULL)` failed; external networking and Roblox are untested. |
-| Darling Metal device/buffer probe | BLOCKED | After satisfying LLVM 18 dependency, the runtime crashes during Metal initialization on NVIDIA and Lavapipe, before main. Buffer operations and window presentation are untested. |
+| Darling Metal device/buffer probe | PASS with separate patched framework | Real GPU fill/copy, bytes verified, clean exit on RTX 2060 SUPER with one physical ICD. Installed system framework remains original. |
+| Independent macOS Vulkan WSI | PASS on tested host | Real Wayland and X11/XWayland surface/swapchain, 30 presentations of Metal-filled pixels. See VULKAN_WINDOW.md. |
+| Limited NSWindow/NSView/CAMetalLayer Vulkan APIs | PASS on tested host | Separate original runtime, public-API fixture, 60 frames, explicit resize, second window, close and unsupported-option checks; Wayland and X11. |
+| Complete AppKit/QuartzCore framework ABI | UNKNOWN / pending | Standalone subset is not installed under canonical framework names; event loop, input, composition and many selectors remain absent. |
 | Graphics/audio/input/network host prerequisites | PARTIAL | Host dependencies detected; audio and input through Darling remain untested. |
 | macOS Roblox client under Darling | UNKNOWN | No Roblox executable downloaded or run; no compatibility claim. |
 | Gameplay and multiplayer | UNKNOWN | No session or account test was run. |

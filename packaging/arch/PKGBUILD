@@ -6,6 +6,11 @@ arch=('any')
 url='https://github.com/thu12dta3/Roblox-LX'
 license=('custom')
 depends=('python>=3.10')
+optdepends=('vulkan-tools: Vulkan diagnostics and host rendering test'
+            'sdl2: independent macOS Vulkan window probe'
+            'clang: independent Mach-O compilation'
+            'lld: Mach-O linker'
+            'llvm18-libs: exact LLVM dependency of the tested external Darling release')
 makedepends=()
 source=()
 sha256sums=()
@@ -20,6 +25,7 @@ package() {
   install -Dm644 "${repo_root}/docs/INSTALLATION.md" "${pkgdir}/usr/share/doc/roblox-lx/docs/INSTALLATION.md"
   install -Dm644 "${repo_root}/docs/COMPATIBILITY.md" "${pkgdir}/usr/share/doc/roblox-lx/docs/COMPATIBILITY.md"
   install -Dm644 "${repo_root}/docs/API_BLOCKERS.md" "${pkgdir}/usr/share/doc/roblox-lx/docs/API_BLOCKERS.md"
+  install -Dm644 "${repo_root}/docs/VULKAN_WINDOW.md" "${pkgdir}/usr/share/doc/roblox-lx/docs/VULKAN_WINDOW.md"
   install -dm755 "${pkgdir}/usr/bin"
   cat > "${pkgdir}/usr/bin/robloxlx" <<'EOF'
 #!/bin/sh

@@ -29,3 +29,36 @@ O projeto Darling atual usa o servidor de kernel em espaço de usuário (`darlin
 - **Adaptadores host conceitualmente transferíveis:** Vulkan direto para gráficos; áudio por PipeWire/PulseAudio; eventos e raw mouse de X11/Wayland; sockets POSIX/DNS do sistema. OpenGL e Zink foram excluídos como backend/fallback. Cada adaptador exige teste independente e revisão de licença.
 - **Não transferíveis para este projeto:** `libMacOBloxShims.dylib`, stubs de framework carregados no processo, `patch_startup_throttle.py`, substituição de bytes/funções, patches de transporte/RakNet, alterações FastFlags para forçar renderizador, ocultar device Metal ou injeção/interposição destinada ao cliente. A política exige executável íntegro e não altera protocolos/verificações.
 - **Licenças:** MacOBlox declara MIT, mas incorpora bibliotecas/fontes com avisos próprios e conteúdo proprietário Roblox. O repositório foi auditado em `work/MacOBlox-audit` e não será empacotado. Darling permanece dependência externa; a licença proprietária do ROBLOX-LX não altera suas licenças.
+
+## Atualização: Metal offscreen corrigido (2026-10-11)
+
+Os resultados anteriores de crash permanecem como histórico. O teste atual com framework recompilado e ICD NVIDIA isolado passou, incluindo saída 0 e término da thread de polling. Nenhum cliente Roblox foi executado.
+
+| API/comportamento | Esperado | Observado atual | Implementação | Estado |
+|---|---|---|---|---|
+| Inicialização Vulkan | Criar dispositivo físico | Enumeração conjunta carregava LLVM 18 e LLVM 23 via Lavapipe; seleção de um ICD NVIDIA permite inicialização real | `src/robloxlx/graphics/vulkan.py`; patch `src/Metal/Metal.mm` | PASS no host testado |
+| `MTLDevice.name` | Nome real da GPU | NVIDIA GeForce RTX 2060 SUPER | Patch `src/Metal/MTLDevice.mm`, delega a Indium | PASS |
+| `blitCommandEncoder`, `fillBuffer:range:value:` | Executar preenchimento GPU | Todos os 256 bytes conferidos após conclusão | Patch `src/Metal/MTLBlitCommandEncoder.mm` | PASS |
+| `copyFromBuffer:sourceOffset:toBuffer:destinationOffset:size:` | Copiar buffers GPU | Todos os 256 bytes do segundo buffer conferidos | Mesmo adaptador; operação real de Indium | PASS |
+| `MTLCommandBuffer.status` | Reportar conclusão real | Estado 4 recebido após callback de conclusão Indium | Patch `src/Metal/MTLCommandBuffer.mm` | PASS no caminho de sucesso; caminho de erro UNKNOWN |
+| Término Metal | Parar polling antes de destruir dispositivos | Thread encerrada e processo sai 0 | Patch `src/Metal/MTLDevice.mm` usa join; `Metal.mm` usa atexit idempotente | PASS |
+| AppKit / CAMetalLayer apresentação | Janela e frames por Vulkan | Não implementado/testado; integração upstream envolve OpenGL | QuartzCore/CAMetalDrawable upstream; adaptador Vulkan de apresentação ainda ausente | BLOCKED para Vulkan-only atual |
+
+O patch é distribuído separadamente em `packaging/darling-metal/metal-vulkan.patch` sob MPL-2.0, preservando os avisos. O framework do sistema não foi substituído.
+
+## Atualização: WSI independente
+
+O fixture `macho_window.mm` criou superfícies e swapchains reais Wayland e X11/XWayland, usando o mesmo dispositivo da API Metal, e apresentou 30 frames por Vulkan. A identificação interna do buffer precisou validar RTTI antes do cast; falha inicial e correção estão descritas em `VULKAN_WINDOW.md`. A integração `NSWindow/NSView/CAMetalLayer` permanece pendente. O resultado WSI não remove esse bloqueio e não comprova execução do Roblox.
+
+## Atualização: subconjunto público de APIs de janela
+
+| API | Esperado | Observado | Implementação | Estado |
+|---|---|---|---|---|
+| NSWindow criação/show/title/contentView/close | Janela nativa e ciclo de vida | Duas janelas Vulkan reais; fechamento repetido seguro | `runtime/window/LXWindow.mm` | PASS no subconjunto testado; origin/defer incompletos |
+| NSWindow.setContentSize / CAMetalLayer.drawableSize | Recriar framebuffer e drawables no tamanho solicitado | 640×480 → 320×240, dimensões das texturas conferidas | Mesmo runtime; resize nativo limitado a 1s e reset após GPU idle | PASS para resize explícito na escala testada |
+| NSView.layer / CAMetalLayer.nextDrawable | Associar layer a janela e adquirir textura Metal | Texturas reais da swapchain; zero-size/closed retornam nil | Runtime original + IndiumKit externo | PASS; composição/subviews UNKNOWN |
+| MTLCommandBuffer.presentDrawable | Apresentar renderização após sincronização GPU | 60 frames via API Metal e frame adicional em segunda janela | Metal patch existente + `runtime/window/indium-kit.patch` | PASS Wayland e X11 |
+| VK_SUBOPTIMAL_KHR | Aceitar apresentação válida, permitir posterior reconstrução | Código upstream abortava; patch aceita resultado e registra ocorrência | Patch externo IndiumKit PrivateDrawable.present | Corrigido; recuperação OUT_OF_DATE ainda pendente |
+| CAMetalDrawable timing/callbacks | Timestamps reais, agendamento e confirmação de apresentação | Não implementados; chamadas rejeitadas explicitamente | LXMetalDrawable no runtime original | UNKNOWN / não suportado |
+| NSApplication event loop / input | Receber e despachar eventos macOS | Não implementado nesse subconjunto | Próximo adaptador de eventos ainda ausente | UNKNOWN |
+| AppKit/QuartzCore completos e ABI do cliente | Resolver frameworks/macOS ABI integral | Biblioteca separada ligada somente ao fixture; frameworks instalados intactos | Build `runtime/window/build.sh` | UNKNOWN; Roblox ainda não pronto |

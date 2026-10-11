@@ -17,4 +17,6 @@ O PKGBUILD inclui apenas o CLI, documentação e licença proprietária; não in
 
 Após instalar Darling, confirme o runtime com `robloxlx doctor`. Use um programa macOS independente primeiro. O comando de execução aceita `robloxlx launch --program /caminho/binario --dry-run` para inspecionar o plano sem iniciar processo. Para iniciar de fato, remova `--dry-run`; logs ficam em `$XDG_STATE_HOME/robloxlx/logs` ou `~/.local/state/robloxlx/logs`.
 
+No host, o teste gráfico direto Vulkan é `robloxlx graphics-test --frames 3`. Requer `vkcube`, uma sessão Wayland/X11 ativa e uma GPU Vulkan integrada ou discreta. Não usa OpenGL/Zink e testa a apresentação Linux Vulkan, não Metal/Darling.
+
 **Atenção ao prefixo:** se `--prefix` for omitido, Darling pode criar/inicializar `~/.darling` ao primeiro uso. Para evitar isso, passe um DPREFIX já existente com `--prefix /caminho`. O backend não cria, apaga nem migra prefixos por conta própria.

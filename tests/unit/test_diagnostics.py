@@ -14,6 +14,9 @@ class DiagnosticsTests(unittest.TestCase):
         self.assertEqual(result["architecture"], "x86_64")
         self.assertEqual(result["gpu"], "UNKNOWN")
         self.assertEqual(result["darling_macos_runtime"], "NOT FOUND")
+        self.assertIn("vulkan_graphics_tools", result)
+        self.assertNotIn("darling_graphics_tools", result)
+        self.assertNotIn("opengl", result)
 
 
 if __name__ == "__main__":

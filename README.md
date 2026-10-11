@@ -8,7 +8,8 @@ Investigar a execução do cliente desktop macOS original através da camada de 
 
 ## CLI implementada
 
-- `robloxlx doctor`: detecta distribuição, sessão gráfica, GPU, driver, OpenGL/Vulkan, Darling, ferramentas e bibliotecas de host associadas a gráficos, áudio, entrada e rede.
+- `robloxlx doctor`: detecta distribuição, sessão gráfica, GPU, driver, Vulkan, Darling e ferramentas/bibliotecas do host para Vulkan, áudio, entrada e rede. O caminho gráfico do projeto é Vulkan-only; OpenGL/Zink não são usados como fallback.
+- `robloxlx graphics-test`: abre `vkcube` por alguns frames com WSI Wayland ou XCB, registra a GPU selecionada e comprova apresentação Vulkan independente do Roblox.
 - `robloxlx launch --program /caminho/para/binario-macos [-- argumentos]`: executa um binário local pelo Darling instalado, captura stdout/stderr em `~/.local/state/robloxlx/logs/darling-launch.log` e recolhe o processo. `--prefix` seleciona um prefixo Darling existente. Sem `--prefix`, o próprio Darling pode inicializar o prefixo padrão no primeiro uso.
 - `robloxlx launch --dry-run --program ...`: mostra o comando e não inicia processo.
 - `robloxlx compatibility`, `logs`, `self-test`, `cleanup`, `verify` e `version`.
@@ -32,6 +33,8 @@ Darling e sondas de host são dependências opcionais e nunca instaladas pelo CL
 | Capacidade | Estado |
 |---|---|
 | CLI, descoberta de dependências e gestão de processo Darling | IMPLEMENTADO; coberto por testes unitários |
+| Vulkan host swapchain render | TESTADO com `vkcube` e a GPU física do host; não valida o caminho macOS/Metal de Darling |
+| Gráficos do cliente macOS por Metal→Vulkan em Darling, Vulkan-only | BLOCKED; falta apresentação de janela Metal por Vulkan sem OpenGL |
 | Binário Mach-O x86_64 independente | Fixture compila; execução real **BLOCKED** porque Darling não está instalado neste host |
 | Cliente macOS oficial Roblox em Darling | UNKNOWN; nenhuma cópia foi adquirida ou executada |
 | Hyperion e partida multiplayer | UNKNOWN; não testados |

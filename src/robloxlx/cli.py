@@ -13,6 +13,7 @@ from pathlib import Path
 from robloxlx import __version__
 from robloxlx.compatibility.darling import build_darling_command, detect_darling, run_darling
 from robloxlx.diagnostics import collect_diagnostics
+from robloxlx.graphics.vulkan import run_vulkan_smoke
 
 EXIT_OK = 0
 EXIT_ERROR = 1
@@ -121,6 +122,14 @@ def command_logs(_: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def command_graphics_test(args: argparse.Namespace) -> int:
+    result = run_vulkan_smoke(args.frames)
+    print(f"Vulkan graphics test: {'PASS' if result.passed else 'BLOCKED'}")
+    print(f"GPU: {result.device}")
+    print(result.detail)
+    return EXIT_OK if result.passed else EXIT_BLOCKED
+
+
 def command_self_test(_: argparse.Namespace) -> int:
     suite = unittest.defaultTestLoader.discover("tests/unit")
     result = unittest.TextTestRunner(verbosity=2).run(suite)
@@ -149,6 +158,7 @@ def build_parser() -> argparse.ArgumentParser:
         "compatibility": (command_compatibility, "Show current evidence-backed compatibility status."),
         "launch": (command_launch, "Run a local macOS executable through an installed Darling runtime."),
         "logs": (command_logs, "List ROBLOX-LX log files."),
+        "graphics-test": (command_graphics_test, "Run a standalone Vulkan-only GPU/window smoke test."),
         "self-test": (command_self_test, "Run the local unit test suite."),
         "cleanup": (command_cleanup, "Remove only ROBLOX-LX temporary cache files."),
     }
@@ -159,6 +169,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub.choices["launch"].add_argument("--program", help="Existing macOS executable on the Linux host.")
     sub.choices["launch"].add_argument("--prefix", help="Use this existing Darling prefix (never created by ROBLOX-LX).")
     sub.choices["launch"].add_argument("program_args", nargs=argparse.REMAINDER, help="Arguments passed after --program PATH.")
+    sub.choices["graphics-test"].add_argument("--frames", type=int, default=3, help="Frames to present (1-1000).")
     version = sub.add_parser("version", help="Show version.")
     version.set_defaults(handler=lambda _: print(f"ROBLOX-LX {__version__}") or EXIT_OK)
     return parser

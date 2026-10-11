@@ -65,13 +65,12 @@ def collect_diagnostics() -> dict[str, str]:
     gpu = _run(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"])
     if not gpu:
         gpu = _run(["lspci", "-nn", "-d", "::0300"])
-    gl = _run_matching(["glxinfo", "-B"], ("opengl vendor", "opengl renderer", "opengl version"))
     vk = _run_matching(["vulkaninfo", "--summary"], ("apiversion", "devicename", "drivername"))
     darling = detect_darling()
     libraries = {
-        "OpenGL": "GL", "EGL": "EGL", "Vulkan": "vulkan",
+        "Vulkan": "vulkan",
         "PulseAudio": "pulse", "PipeWire": "pipewire-0.3",
-        "X11": "X11", "XInput2": "Xi", "Wayland": "wayland-client",
+        "X11/WSI": "X11", "XInput2": "Xi", "Wayland/WSI": "wayland-client",
     }
     library_status = [f"{label}={'FOUND' if find_library(name) else 'NOT FOUND'}" for label, name in libraries.items()]
     return {
@@ -81,13 +80,12 @@ def collect_diagnostics() -> dict[str, str]:
         "graphical_session": session,
         "gpu": gpu or "UNKNOWN",
         "nvidia_driver": _run(["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"]) or "UNKNOWN",
-        "opengl": gl or ("UNKNOWN (glxinfo present; no summary fields returned)" if shutil.which("glxinfo") else "UNKNOWN"),
         "vulkan": vk or ("UNKNOWN (vulkaninfo present; no summary fields returned)" if shutil.which("vulkaninfo") else "UNKNOWN"),
         "darling_macos_runtime": darling.version if darling else "NOT FOUND",
-        "darling_graphics_tools": ", ".join(name for name in ("glxinfo", "vulkaninfo", "eglinfo") if shutil.which(name)) or "UNKNOWN",
+        "vulkan_graphics_tools": ", ".join(name for name in ("vulkaninfo", "vkcube") if shutil.which(name)) or "UNKNOWN",
         "darling_audio_tools": ", ".join(name for name in ("pw-cat", "pacat", "pactl") if shutil.which(name)) or "UNKNOWN",
         "darling_input_tools": ", ".join(name for name in ("xinput", "libinput") if shutil.which(name)) or "UNKNOWN",
         "darling_network_tools": ", ".join(name for name in ("getent", "resolvectl") if shutil.which(name)) or "UNKNOWN",
         "darling_host_libraries": ", ".join(library_status),
-        "dependencies": ", ".join(name for name in ("glxinfo", "vulkaninfo", "nvidia-smi", "lspci") if shutil.which(name)) or "NONE OF OPTIONAL PROBES FOUND",
+        "dependencies": ", ".join(name for name in ("vulkaninfo", "vkcube", "nvidia-smi", "lspci") if shutil.which(name)) or "NONE OF OPTIONAL PROBES FOUND",
     }

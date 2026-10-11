@@ -3,7 +3,8 @@
 ROBLOX-LX 0.1.0 is a Python CLI built on the standard library. Current priority is the official macOS desktop executable through Darling's Darwin/macOS API translation on Linux, without Android, a guest OS, or a VM.
 
 - `robloxlx.cli`: subcommands, exit codes, local state paths, and fail-closed launch behavior.
-- `robloxlx.diagnostics`: read-only Linux host probes plus OpenGL/EGL/Vulkan, audio, input and network tool/library availability.
+- `robloxlx.diagnostics`: read-only Linux host probes plus Vulkan, audio, input and network tool/library availability. The product graphics route must not use OpenGL or Zink.
+- `robloxlx.graphics.vulkan`: bounded `vkcube` WSI smoke on Wayland/XCB; Vulkan-only and independent of Darling/Roblox.
 - `robloxlx.compatibility.darling`: detects installed Darling, maps host paths to `/Volumes/SystemRoot`, builds shell-free argv, supports an existing DPREFIX, captures output to mode-0600 logs, and waits/reaps or terminates the process group.
 - `tests/unit`: mocked backend tests and a standalone Mach-O syscall fixture with an integration run that requires installed Darling.
 

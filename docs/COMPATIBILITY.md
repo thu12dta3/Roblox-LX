@@ -4,6 +4,7 @@
 |---|---|---|
 | Linux host detection | SUPPORTED | Implemented read-only Python probes. |
 | Graphics utility detection | PARTIAL | Detects utility availability and samples output; not a rendering test. |
+| Host Vulkan WSI extensions | PASS / UNKNOWN | `doctor` reads `VK_KHR_surface` and the active Wayland/XCB instance extension from `vulkaninfo --summary`; this does not test Darling or Metal translation. |
 | Darling discovery and process lifecycle | IMPLEMENTED | Python standard library; argv safety, path mapping, process exit, log permissions, and missing-runtime unit coverage. |
 | Independent x86_64 Mach-O fixture build | PASS | Built with host `clang` 23.1.1 and `ld64.lld` 23.1.1; verified `cffaedfe` Mach-O 64-bit header. |
 | Independent Mach-O fixture build and app preflight | PASS | Local executable is built and validated as x86_64 Mach-O; `.app` main executable is resolved from `Info.plist`; ELF and wrong architecture are rejected. |

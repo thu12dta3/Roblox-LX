@@ -47,6 +47,38 @@ def _run_matching(args: list[str], markers: tuple[str, ...]) -> str | None:
     return "; ".join(selected[:4])[:500] if selected else None
 
 
+def _probe_vulkan_wsi(session: str) -> str:
+    """Report host Vulkan instance surface extensions from vulkaninfo summary."""
+    executable = shutil.which("vulkaninfo")
+    if not executable:
+        return "UNKNOWN (vulkaninfo NOT FOUND)"
+    try:
+        result = subprocess.run(  # nosec B603 -- fixed read-only Vulkan capability probe, no shell
+            [executable, "--summary"], capture_output=True, text=True,
+            timeout=5.0, check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return "UNKNOWN (vulkaninfo probe failed)"
+    if result.returncode:
+        return f"UNKNOWN (vulkaninfo exit {result.returncode})"
+    output = (result.stdout or "") + "\n" + (result.stderr or "")
+    available = {
+        line.split(":", 1)[0].strip()
+        for line in output.splitlines()
+        if line.strip().startswith("VK_") and ": extension revision" in line
+    }
+    expected = {
+        "Wayland": "VK_KHR_wayland_surface",
+        "X11": "VK_KHR_xcb_surface",
+    }.get(session)
+    names = ["VK_KHR_surface"]
+    if expected:
+        names.append(expected)
+    if not available:
+        return "UNKNOWN (instance extension list absent from vulkaninfo summary)"
+    return "; ".join(f"{name}={'FOUND' if name in available else 'NOT FOUND'}" for name in names)
+
+
 def _os_name() -> str:
     try:
         for line in Path("/etc/os-release").read_text(encoding="utf-8").splitlines():
@@ -81,6 +113,7 @@ def collect_diagnostics() -> dict[str, str]:
         "gpu": gpu or "UNKNOWN",
         "nvidia_driver": _run(["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"]) or "UNKNOWN",
         "vulkan": vk or ("UNKNOWN (vulkaninfo present; no summary fields returned)" if shutil.which("vulkaninfo") else "UNKNOWN"),
+        "host_vulkan_wsi_extensions": _probe_vulkan_wsi(session),
         "darling_macos_runtime": darling.version if darling else "NOT FOUND",
         "vulkan_graphics_tools": ", ".join(name for name in ("vulkaninfo", "vkcube") if shutil.which(name)) or "UNKNOWN",
         "darling_audio_tools": ", ".join(name for name in ("pw-cat", "pacat", "pactl") if shutil.which(name)) or "UNKNOWN",

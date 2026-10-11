@@ -29,7 +29,7 @@ def run_vulkan_smoke(frames: int = 3, timeout: float = 30.0) -> VulkanSmokeResul
     else:
         return VulkanSmokeResult(False, "UNKNOWN", "no Wayland or X11 display is available")
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 -- fixed trusted vkcube argv, no shell
             [executable, "--wsi", wsi, "--c", str(frames)],
             capture_output=True, text=True, timeout=timeout, check=False,
         )

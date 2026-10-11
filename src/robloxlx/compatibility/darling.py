@@ -27,7 +27,7 @@ def detect_darling(timeout: float = 3.0) -> DarlingRuntime | None:
         return None
     executable = Path(resolved).resolve()
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 -- fixed version probe, no shell
             [str(executable), "--version"], capture_output=True, text=True,
             timeout=timeout, check=False,
         )
@@ -77,7 +77,7 @@ def run_darling(
         os.chmod(log_path, 0o600)
         log.write(f"Starting Darling process for {Path(executable).resolve()}\n")
         log.flush()
-        process = subprocess.Popen(
+        process = subprocess.Popen(  # nosec B603 -- explicit argv, user-selected program, no shell
             argv, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
             env=environment, start_new_session=True,
         )

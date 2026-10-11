@@ -4,7 +4,7 @@
 
 ## Objetivo e estado
 
-Investigar a execução do cliente desktop macOS original através da camada de tradução de APIs Darling, diretamente no Linux e sem Android, VM ou emulação de um sistema operacional convidado. ROBLOX-LX não baixa, altera ou injeta código no executável. O teste Mach-O independente já executou com sucesso pelo Darling instalado. O teste de DNS/TCP loopback também passou. Metal ainda provoca SIGSEGV na inicialização do runtime; a execução do Roblox continua **UNKNOWN**.
+Investigar a execução do cliente desktop macOS original através da camada de tradução de APIs Darling, diretamente no Linux e sem Android, VM ou emulação de um sistema operacional convidado. ROBLOX-LX não baixa, altera ou injeta código no executável. O teste Mach-O independente já executou com sucesso pelo Darling instalado. O teste de DNS/TCP loopback também passou. O framework Metal corrigido passou no teste de preenchimento e cópia de buffers na GPU física via Vulkan, com encerramento limpo. O framework instalado ainda é o original; janela macOS e execução do Roblox continuam **UNKNOWN**.
 
 ## CLI implementada
 
@@ -37,7 +37,7 @@ Darling e sondas de host são dependências opcionais e nunca instaladas pelo CL
 |---|---|
 | CLI, descoberta de dependências e gestão de processo Darling | IMPLEMENTADO; coberto por testes unitários |
 | Vulkan host swapchain render | TESTADO com `vkcube` e a GPU física do host; não valida o caminho macOS/Metal de Darling |
-| Gráficos macOS por Metal→Vulkan em Darling, Vulkan-only | BLOCKED; crash na inicialização Metal com NVIDIA e Lavapipe; apresentação de janela não testada |
+| Gráficos macOS por Metal→Vulkan em Darling, Vulkan-only | TESTADO para buffers offscreen com framework corrigido; apresentação de janela UNKNOWN |
 | Binário Mach-O x86_64 independente | PASS: execução real por Darling com `write`/`exit` e marcador esperado |
 | DNS e TCP loopback por Darling | PASS com buffers de endereço em `accept`; variante NULL falhou; rede Roblox UNKNOWN |
 | Cliente macOS oficial Roblox em Darling | UNKNOWN; nenhuma cópia foi adquirida ou executada |
@@ -49,3 +49,7 @@ Não declarar compatibilidade ou segurança sem evidência reproduzível. Nenhum
 ## Licença
 
 O arquivo proprietário `LICENSE` aplica-se exatamente aos materiais de Bannaman6655 Productions. Nenhum código do Darling ou MacOBlox foi copiado para este repositório.
+
+### Framework Metal experimental separado
+
+O patch e o build reproduzível ficam em `packaging/darling-metal/`, sob as licenças externas indicadas ali. `metal-test --metal-library CAMINHO --vulkan-driver /usr/share/vulkan/icd.d/nvidia_icd.json` vincula somente o executável independente ao framework escolhido. Não instala o framework nem modifica o cliente Roblox.

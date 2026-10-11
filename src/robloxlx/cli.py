@@ -156,9 +156,10 @@ def command_self_test(_: argparse.Namespace) -> int:
     return EXIT_OK if result.wasSuccessful() else EXIT_ERROR
 
 
-def command_metal_test(_: argparse.Namespace) -> int:
+def command_metal_test(args: argparse.Namespace) -> int:
     log = _state_dir() / "metal-test.log"
-    result = test_metal_runtime(log)
+    result = test_metal_runtime(log, driver=Path(args.vulkan_driver) if args.vulkan_driver else None,
+                                library=Path(args.metal_library) if args.metal_library else None)
     print(f"Darling Metal buffer test: {'PASS' if result.passed else 'BLOCKED'}")
     print(result.detail)
     if log.exists():
@@ -214,6 +215,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub.choices["launch"].add_argument("--prefix", help="Use this existing Darling prefix (never created by ROBLOX-LX).")
     sub.choices["launch"].add_argument("program_args", nargs=argparse.REMAINDER, help="Arguments passed after --program PATH.")
     sub.choices["graphics-test"].add_argument("--frames", type=int, default=3, help="Frames to present (1-1000).")
+    sub.choices["metal-test"].add_argument("--vulkan-driver", help="Use this ICD manifest for the independent Metal test; default selects physical hardware.")
+    sub.choices["metal-test"].add_argument("--metal-library", help="Link the independent fixture against this source-built Metal implementation.")
     version = sub.add_parser("version", help="Show version.")
     version.set_defaults(handler=lambda _: print(f"ROBLOX-LX {__version__}") or EXIT_OK)
     return parser

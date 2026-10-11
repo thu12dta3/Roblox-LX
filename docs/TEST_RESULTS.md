@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-10-11 (corrected Metal source build)
+
+- Independent macOS Metal executable linked to the separately built framework — PASS, exit 0. Real RTX 2060 SUPER device name, 256-byte GPU fill, GPU copy to a second buffer, command status 4, and complete byte comparison. Runtime teardown markers confirm polling stopped and teardown completed. ICD selected: `/usr/share/vulkan/icd.d/nvidia_icd.json`. No OpenGL API used by this probe.
+- `PYTHONPATH=src python -m unittest discover -s tests/unit` — PASS; 25 tests, zero skips. Includes physical ICD selection, rejection of software-only devices and preservation of user overrides.
+- Reproducible build script compiled every Metal translation unit and linked successfully. Result SHA-256: `f94ed36f72d40c406e61e497c6526af5097ddeaa8bfa3adc51c4be8d29e38a03`. Running `metal-test --metal-library work/metal-reproducible/Metal` against that freshly rebuilt artifact — PASS, exit 0.
+- System Metal framework remains original; source build is tested through a normal link dependency of the independent executable. Window presentation, Roblox launch and gameplay remain UNKNOWN.
+
+
 ## 2026-10-11 (successful Darwin execution and real API probes)
 
 - Installed corrected local Darling package `20260609-2` through Konsole. `/usr/bin/darlingserver` is now present. Installed official Arch `llvm18-libs 18.1.8-2`, satisfying the `libLLVM-18.so` name embedded in the release's Iridium library; no LLVM library was renamed across versions.

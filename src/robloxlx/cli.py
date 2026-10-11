@@ -11,7 +11,7 @@ import unittest
 from pathlib import Path
 
 from robloxlx import __version__
-from robloxlx.compatibility.wine import detect_wine
+from robloxlx.compatibility.darling import build_darling_command, detect_darling, run_darling
 from robloxlx.diagnostics import collect_diagnostics
 
 EXIT_OK = 0
@@ -32,7 +32,7 @@ def _print_status(items: dict[str, str]) -> None:
 
 def command_doctor(_: argparse.Namespace) -> int:
     _print_status(collect_diagnostics())
-    print("Roblox compatibility : BLOCKED / NOT VALIDATED")
+    print("Roblox compatibility : UNKNOWN / NOT TESTED")
     return EXIT_OK
 
 
@@ -64,24 +64,46 @@ def command_verify(_: argparse.Namespace) -> int:
 
 
 def command_compatibility(_: argparse.Namespace) -> int:
-    wine = detect_wine()
-    print(f"Wine runtime: {wine.version if wine else 'NOT FOUND'}")
-    print("Basic Windows PE startup: smoke-tested on development host; not a Roblox compatibility result")
-    print("Hyperion under Wine: BLOCKED (Roblox staff says full-featured Hyperion does not work on Wine)")
-    print("Mac client, mobile client, full OS emulation, and VMs: OUT OF SCOPE")
-    print("Launch readiness: BLOCKED; no process started and no anti-cheat changes are permitted")
-    print("No anti-cheat bypass, client patching, memory modification, or protocol spoofing is implemented.")
+    darling = detect_darling()
+    print(f"Darling runtime: {darling.version if darling else 'NOT FOUND'}")
+    print("Target: macOS desktop executable through Darling API translation; no guest OS or VM")
+    print("Independent macOS executable: NOT TESTED")
+    print("Roblox compatibility and gameplay: UNKNOWN")
+    print("No client patches, injected shims, protocol modifications, or anti-cheat changes are implemented.")
     return EXIT_OK
 
 
 def command_launch(args: argparse.Namespace) -> int:
+    if args.program:
+        darling = detect_darling()
+        if not darling:
+            print("Launch blocked: Darling was not found; no process started.")
+            return EXIT_BLOCKED
+        if args.dry_run:
+            try:
+                command = build_darling_command(darling, Path(args.program), args.program_args)
+            except (FileNotFoundError, ValueError) as exc:
+                print(f"Launch plan: invalid program: {exc}")
+                return EXIT_ERROR
+            print(f"Launch plan: {' '.join(command)}")
+            print("No process started.")
+            return EXIT_OK
+        try:
+            result = run_darling(
+                darling, Path(args.program), args.program_args, _state_dir() / "darling-launch.log",
+                prefix=Path(args.prefix) if args.prefix else None,
+            )
+        except FileNotFoundError as exc:
+            print(f"Launch error: {exc}")
+            return EXIT_ERROR
+        print(f"Darling process exited with status {result}; log: {_state_dir() / 'darling-launch.log'}")
+        return result if result >= 0 else EXIT_ERROR
     if args.dry_run:
         details = collect_diagnostics()
         _print_status(details)
-        print("Launch plan: BLOCKED (Wine/Hyperion path is not validated; no process started)")
+        print("Launch plan: BLOCKED (provide --program with a local macOS desktop executable)")
         return EXIT_BLOCKED
-    print("Launch blocked: Roblox-LX has no validated, policy-compliant Roblox launch backend.")
-    print("No client was started and no account credentials were accessed.")
+    print("Launch blocked: provide --program with an existing macOS executable.")
     return EXIT_BLOCKED
 
 
@@ -125,7 +147,7 @@ def build_parser() -> argparse.ArgumentParser:
         "doctor": (command_doctor, "Inspect the Linux host without changing it."),
         "verify": (command_verify, "Measure a configured client file; cannot establish official provenance."),
         "compatibility": (command_compatibility, "Show current evidence-backed compatibility status."),
-        "launch": (command_launch, "Launch only when a validated backend is available."),
+        "launch": (command_launch, "Run a local macOS executable through an installed Darling runtime."),
         "logs": (command_logs, "List ROBLOX-LX log files."),
         "self-test": (command_self_test, "Run the local unit test suite."),
         "cleanup": (command_cleanup, "Remove only ROBLOX-LX temporary cache files."),
@@ -134,6 +156,9 @@ def build_parser() -> argparse.ArgumentParser:
         cmd = sub.add_parser(name, help=help_text)
         cmd.set_defaults(handler=handler)
     sub.choices["launch"].add_argument("--dry-run", action="store_true", help="Report readiness without starting a process.")
+    sub.choices["launch"].add_argument("--program", help="Existing macOS executable on the Linux host.")
+    sub.choices["launch"].add_argument("--prefix", help="Use this existing Darling prefix (never created by ROBLOX-LX).")
+    sub.choices["launch"].add_argument("program_args", nargs=argparse.REMAINDER, help="Arguments passed after --program PATH.")
     version = sub.add_parser("version", help="Show version.")
     version.set_defaults(handler=lambda _: print(f"ROBLOX-LX {__version__}") or EXIT_OK)
     return parser

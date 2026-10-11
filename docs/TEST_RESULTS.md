@@ -1,20 +1,20 @@
 # Test results
 
-## 2026-10-11
+## 2026-10-11 (Darling backend work)
 
-Commands run locally:
+Recorded after executing the commands in this section:
 
-- `PYTHONPATH=src python -m unittest discover -s tests/unit` — PASS (4 tests).
-- `PYTHONPATH=src python -m robloxlx.cli version` — PASS (`ROBLOX-LX 0.1.0`).
-- `PYTHONPATH=src python -m robloxlx.cli doctor` — PASS; detected Garuda Linux, x86_64, kernel 7.2.9-zen1-1-zen, Wayland, NVIDIA GeForce RTX 2060 SUPER, driver 615.71.09, OpenGL 4.6.0, Vulkan 1.4.351 on the NVIDIA device (plus llvmpipe at 1.4.354), and Wine 11.19. Vulkan emitted loader warnings about optional display-property functions; device enumeration succeeded. This was not a rendering conformance test.
-- `PYTHONPATH=src python -m robloxlx.cli compatibility` — PASS; reported Wine API translation as the permitted direction, Hyperion/Wine as BLOCKED, and macOS/mobile/VM paths OUT OF SCOPE.
-- `PYTHONPATH=src python -m robloxlx.cli launch --dry-run` — PASS as a safe refusal; Wine/Hyperion is not validated; no process started (exit 2 is expected).
+- `python -m unittest discover -s tests/unit` — first attempt without the source tree installed/importable failed with three `ModuleNotFoundError: robloxlx` collection errors. The checkout test command `PYTHONPATH=src python -m unittest discover -s tests/unit` then passed all 5 runnable tests; 1 integration test skipped because Darling is absent.
+- `PYTHONPATH=src python -m robloxlx.cli doctor` — PASS; Garuda Linux, x86_64, kernel 7.2.9-zen1-1-zen, Wayland, RTX 2060 SUPER, driver 615.71.09; OpenGL 4.6.0, Vulkan 1.4.351 (NVIDIA; llvmpipe also reported at 1.4.354); Darling NOT FOUND. OpenGL/EGL/Vulkan, PipeWire/PulseAudio, X11/XInput2/Wayland host libraries found; `pw-cat`, `pacat`, `pactl`, `libinput`, `getent`, `resolvectl`, and graphics probes detected. This is discovery, not an I/O test.
+- `PYTHONPATH=src python -m robloxlx.cli compatibility` — PASS; Darling NOT FOUND and Roblox/gameplay UNKNOWN.
+- `PYTHONPATH=src python -m robloxlx.cli launch --dry-run` — PASS as safe refusal (exit 2; target path required).
+- `PYTHONPATH=src python -m robloxlx.cli launch --program /bin/true` — PASS as safe refusal (exit 2; Darling NOT FOUND, no process started).
+- Process manager fake-runtime test — PASS; validates argv mapping, output capture, exit status and mode-0600 log.
+- `PYTHONPATH=src python -m compileall -q src tests/unit` — PASS.
+- `git diff --check` — PASS.
+- Arch packaging metadata: `(cd packaging/arch && makepkg --printsrcinfo)` and `bash -n PKGBUILD` — PASS; package installation/build was not run.
+- Standalone Mach-O fixture — `clang -target x86_64-apple-macos10.15` and `ld64.lld` both succeeded; `file` reported Mach-O 64-bit x86_64 executable and magic `cffaedfe`.
+- Actual Mach-O execution through Darling — BLOCKED because `darling` is not installed. The integration test is present and skips unless Darling, Clang and ld64.lld are available.
+- Roblox executable, account, credentials, client rendering/audio/input/network/gameplay — NOT TESTED.
 
-GitHub Actions `Tests`, `Lint` (compile check), and `Security checks` workflows all passed on pull request #1. The checks ran for both the branch push and pull request event.
-
-Additional independent runtime check:
-
-- Compiled a trivial x86_64 Windows PE entry-point program with the already installed Clang/LLD and ran it using Wine 11.19 under a temporary `WINEPREFIX` — PASS (exit 0). Wine/Mesa printed EGL device warnings during prefix initialization; the smoke program completed. This checks basic PE startup only, not Windows API coverage, rendering, or application compatibility.
-- Four unit tests cover missing Wine detection, argument-vector safety, and invalid/missing executable paths.
-
-No Roblox binary, account, or game was used. No Roblox runtime, Roblox gameplay, graphics rendering, audio, input, or multiplayer test has been performed.
+Earlier Wine-only tests and runtime experiments do not establish Darling or Roblox compatibility.

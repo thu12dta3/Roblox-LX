@@ -13,7 +13,7 @@ class DiagnosticsTests(unittest.TestCase):
         self.assertEqual(result["kernel"], "test-kernel")
         self.assertEqual(result["architecture"], "x86_64")
         self.assertEqual(result["gpu"], "UNKNOWN")
-        self.assertEqual(result["wine_api_translation"], "NOT FOUND")
+        self.assertEqual(result["darling_macos_runtime"], "NOT FOUND")
 
 
 if __name__ == "__main__":

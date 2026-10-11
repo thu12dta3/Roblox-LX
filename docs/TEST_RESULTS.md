@@ -4,13 +4,15 @@
 
 Recorded after executing the commands in this section:
 
-- `python -m unittest discover -s tests/unit` — first attempt without the source tree importable failed with three `ModuleNotFoundError: robloxlx` collection errors. `PYTHONPATH=src python -m unittest discover -s tests/unit` then passed 9 tests; 1 integration test skipped because Darling is absent.
+- `python -m unittest discover -s tests/unit` — first attempt without the source tree importable failed with three `ModuleNotFoundError: robloxlx` collection errors. Latest `PYTHONPATH=src python -m unittest discover -s tests/unit` passed 14 tests; 1 integration test skipped because Darling is absent.
 - `PYTHONPATH=src python -m robloxlx.cli doctor` — PASS; Garuda Linux, x86_64, kernel 7.2.9-zen1-1-zen, Wayland, RTX 2060 SUPER, driver 615.71.09; Vulkan 1.4.351 on NVIDIA and 1.4.354 on llvmpipe; Darling NOT FOUND. Vulkan, PipeWire/PulseAudio, X11/XInput2/Wayland host libraries found; `vkcube`, `vulkaninfo`, `pw-cat`, `pacat`, `pactl`, `libinput`, `getent`, and `resolvectl` detected. Diagnostics do not probe OpenGL.
 - `PYTHONPATH=src python -m robloxlx.cli graphics-test --frames 3` — PASS; `vkcube` presented three Wayland swapchain frames on NVIDIA GeForce RTX 2060 SUPER (`PHYSICAL_DEVICE_TYPE_DISCRETE_GPU`). It used Vulkan directly and did not use OpenGL. This tests host presentation only, not Darling's macOS Metal window path.
 - `PYTHONPATH=src python -m robloxlx.cli compatibility` — PASS; Darling NOT FOUND and Roblox/gameplay UNKNOWN.
 - `PYTHONPATH=src python -m robloxlx.cli launch --dry-run` — PASS as safe refusal (exit 2; target path required).
-- `PYTHONPATH=src python -m robloxlx.cli launch --program /bin/true` — PASS as safe refusal (exit 2; Darling NOT FOUND, no process started).
+- `PYTHONPATH=src python -m robloxlx.cli launch --program /bin/true --dry-run` — PASS as safe refusal (exit 1; ELF rejected before Darling discovery).
+- `PYTHONPATH=src python -m robloxlx.cli darling-test` — BLOCKED as expected (exit 2; Darling NOT FOUND, no process started).
 - Process manager fake-runtime test — PASS; validates argv mapping, output capture, exit status and mode-0600 log.
+- Mach-O/App bundle preflight — PASS; builds a real local x86_64 Mach-O fixture, recognizes its architecture, resolves an `.app` main executable from `Info.plist`, and rejects ELF/wrong-architecture files before launch. `darling-test` is the repeatable independent runtime test when Darling is present.
 - Vulkan selection and software-device rejection unit tests — PASS.
 - `PYTHONPATH=src python -m compileall -q src tests/unit` — PASS.
 - `git diff --check` — PASS.

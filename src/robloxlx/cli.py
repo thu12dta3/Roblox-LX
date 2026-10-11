@@ -11,7 +11,10 @@ import unittest
 from pathlib import Path
 
 from robloxlx import __version__
-from robloxlx.compatibility.darling import build_darling_command, detect_darling, run_darling
+from robloxlx.compatibility.darling import (
+    build_darling_command, detect_darling, resolve_macos_executable, run_darling,
+    test_darling_runtime,
+)
 from robloxlx.diagnostics import collect_diagnostics
 from robloxlx.graphics.vulkan import run_vulkan_smoke
 
@@ -68,7 +71,7 @@ def command_compatibility(_: argparse.Namespace) -> int:
     darling = detect_darling()
     print(f"Darling runtime: {darling.version if darling else 'NOT FOUND'}")
     print("Target: macOS desktop executable through Darling API translation; no guest OS or VM")
-    print("Independent macOS executable: NOT TESTED")
+    print("Independent Mach-O test: NOT RUN (use `robloxlx darling-test`)")
     print("Roblox compatibility and gameplay: UNKNOWN")
     print("No client patches, injected shims, protocol modifications, or anti-cheat changes are implemented.")
     return EXIT_OK
@@ -76,13 +79,20 @@ def command_compatibility(_: argparse.Namespace) -> int:
 
 def command_launch(args: argparse.Namespace) -> int:
     if args.program:
+        try:
+            executable = resolve_macos_executable(Path(args.program))
+        except (FileNotFoundError, ValueError) as exc:
+            print(f"Launch error: {exc}")
+            return EXIT_ERROR
         darling = detect_darling()
         if not darling:
+            if args.dry_run:
+                print(f"Program check: valid host-architecture Mach-O executable: {executable}")
             print("Launch blocked: Darling was not found; no process started.")
             return EXIT_BLOCKED
         if args.dry_run:
             try:
-                command = build_darling_command(darling, Path(args.program), args.program_args)
+                command = build_darling_command(darling, executable, args.program_args)
             except (FileNotFoundError, ValueError) as exc:
                 print(f"Launch plan: invalid program: {exc}")
                 return EXIT_ERROR
@@ -91,10 +101,10 @@ def command_launch(args: argparse.Namespace) -> int:
             return EXIT_OK
         try:
             result = run_darling(
-                darling, Path(args.program), args.program_args, _state_dir() / "darling-launch.log",
+                darling, executable, args.program_args, _state_dir() / "darling-launch.log",
                 prefix=Path(args.prefix) if args.prefix else None,
             )
-        except FileNotFoundError as exc:
+        except (FileNotFoundError, ValueError) as exc:
             print(f"Launch error: {exc}")
             return EXIT_ERROR
         print(f"Darling process exited with status {result}; log: {_state_dir() / 'darling-launch.log'}")
@@ -130,6 +140,13 @@ def command_graphics_test(args: argparse.Namespace) -> int:
     return EXIT_OK if result.passed else EXIT_BLOCKED
 
 
+def command_darling_test(_: argparse.Namespace) -> int:
+    result = test_darling_runtime()
+    print(f"Darling independent Mach-O test: {'PASS' if result.passed else 'BLOCKED'}")
+    print(result.detail)
+    return EXIT_OK if result.passed else EXIT_BLOCKED
+
+
 def command_self_test(_: argparse.Namespace) -> int:
     suite = unittest.defaultTestLoader.discover("tests/unit")
     result = unittest.TextTestRunner(verbosity=2).run(suite)
@@ -159,6 +176,7 @@ def build_parser() -> argparse.ArgumentParser:
         "launch": (command_launch, "Run a local macOS executable through an installed Darling runtime."),
         "logs": (command_logs, "List ROBLOX-LX log files."),
         "graphics-test": (command_graphics_test, "Run a standalone Vulkan-only GPU/window smoke test."),
+        "darling-test": (command_darling_test, "Build and run a standalone macOS syscall executable in a temporary Darling prefix."),
         "self-test": (command_self_test, "Run the local unit test suite."),
         "cleanup": (command_cleanup, "Remove only ROBLOX-LX temporary cache files."),
     }
@@ -166,7 +184,7 @@ def build_parser() -> argparse.ArgumentParser:
         cmd = sub.add_parser(name, help=help_text)
         cmd.set_defaults(handler=handler)
     sub.choices["launch"].add_argument("--dry-run", action="store_true", help="Report readiness without starting a process.")
-    sub.choices["launch"].add_argument("--program", help="Existing macOS executable on the Linux host.")
+    sub.choices["launch"].add_argument("--program", help="Existing macOS Mach-O executable or .app bundle on the Linux host.")
     sub.choices["launch"].add_argument("--prefix", help="Use this existing Darling prefix (never created by ROBLOX-LX).")
     sub.choices["launch"].add_argument("program_args", nargs=argparse.REMAINDER, help="Arguments passed after --program PATH.")
     sub.choices["graphics-test"].add_argument("--frames", type=int, default=3, help="Frames to present (1-1000).")

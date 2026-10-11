@@ -10,11 +10,12 @@ Investigar a execução do cliente desktop macOS original através da camada de 
 
 - `robloxlx doctor`: detecta distribuição, sessão gráfica, GPU, driver, Vulkan, Darling e ferramentas/bibliotecas do host para Vulkan, áudio, entrada e rede. O caminho gráfico do projeto é Vulkan-only; OpenGL/Zink não são usados como fallback.
 - `robloxlx graphics-test`: abre `vkcube` por alguns frames com WSI Wayland ou XCB, registra a GPU selecionada e comprova apresentação Vulkan independente do Roblox.
-- `robloxlx launch --program /caminho/para/binario-macos [-- argumentos]`: executa um binário local pelo Darling instalado, captura stdout/stderr em `~/.local/state/robloxlx/logs/darling-launch.log` e recolhe o processo. `--prefix` seleciona um prefixo Darling existente. Sem `--prefix`, o próprio Darling pode inicializar o prefixo padrão no primeiro uso.
+- `robloxlx darling-test`: compila e executa um fixture Mach-O inofensivo numa pasta temporária e DPREFIX isolado; prova apenas carregamento e syscalls Darwin básicos.
+- `robloxlx launch --program /caminho/Roblox.app [-- argumentos]`: lê `Contents/Info.plist`, confirma o executável Mach-O x86_64 do bundle e só então o chama pelo Darling instalado. Também aceita o caminho direto do executável. Captura stdout/stderr em `~/.local/state/robloxlx/logs/darling-launch.log` e recolhe o processo. `--prefix` seleciona um prefixo Darling existente. Sem `--prefix`, o próprio Darling pode inicializar o prefixo padrão no primeiro uso.
 - `robloxlx launch --dry-run --program ...`: mostra o comando e não inicia processo.
 - `robloxlx compatibility`, `logs`, `self-test`, `cleanup`, `verify` e `version`.
 
-O comando genérico aceita binários locais para testes de compatibilidade. Isso não demonstra que Roblox abre, renderiza, aceita entrada, reproduz áudio, conecta a partidas ou funciona com Hyperion.
+O comando genérico aceita executáveis Mach-O locais ou bundles `.app` para testes de compatibilidade, conferindo arquitetura e executável antes de chamar o Darling. Passar `darling-test` não demonstra que Roblox abre, renderiza, aceita entrada, reproduz áudio, conecta a partidas ou funciona com Hyperion.
 
 ## Desenvolvimento
 
@@ -23,7 +24,7 @@ Requer Python 3.10+. Sem dependências Python externas:
 ```sh
 PYTHONPATH=src python -m robloxlx.cli doctor
 PYTHONPATH=src python -m robloxlx.cli self-test
-python -m unittest discover -s tests/unit
+PYTHONPATH=src python -m unittest discover -s tests/unit
 ```
 
 Darling e sondas de host são dependências opcionais e nunca instaladas pelo CLI. Veja [instalação Arch/Garuda](docs/INSTALLATION.md), [matriz de compatibilidade](docs/COMPATIBILITY.md), [auditoria Darling/MacOBlox e bloqueios de API](docs/API_BLOCKERS.md) e [resultados dos testes](docs/TEST_RESULTS.md).

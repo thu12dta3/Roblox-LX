@@ -39,7 +39,12 @@ def detect_darling() -> DarlingRuntime | None:
     # Darling's launcher may create a prefix and perform privileged namespace
     # setup even for unsupported arguments, so discovery must remain a PATH
     # lookup. The isolated darling-test command performs the first execution.
-    return DarlingRuntime(executable, "VERSION NOT QUERIED (runtime not started)")
+    helper = executable.with_name("darlingserver")
+    if not helper.is_file():
+        version = "INCOMPLETE (darlingserver NOT FOUND; version not queried)"
+    else:
+        version = "VERSION NOT QUERIED (runtime not started)"
+    return DarlingRuntime(executable, version)
 
 
 def host_path_to_darling(path: Path) -> str:
@@ -190,7 +195,11 @@ def test_darling_runtime() -> DarlingSmokeResult:
             status = run_darling(runtime, executable, [], log, prefix=prefix, timeout=30)
             output = log.read_text(encoding="utf-8", errors="replace") if log.exists() else ""
             if status != 0 or "ROBLOXLX_MACHO_OK" not in output:
-                return DarlingSmokeResult(False, f"Mach-O syscall probe failed (exit {status}); see temporary log")
+                tail = "\n".join(output.splitlines()[-12:]).strip()
+                detail = f"Mach-O syscall probe failed (exit {status})"
+                if tail:
+                    detail += f"; Darling output:\n{tail}"
+                return DarlingSmokeResult(False, detail)
             return DarlingSmokeResult(True, "Mach-O executable ran and Darwin syscalls returned the expected marker")
         except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
             return DarlingSmokeResult(False, f"Darling smoke test failed: {exc}")

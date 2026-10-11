@@ -31,12 +31,13 @@ class DarlingBackendTests(unittest.TestCase):
     def test_missing_darling_is_reported(self, _which):
         self.assertIsNone(detect_darling())
 
+    @patch("robloxlx.compatibility.darling.Path.is_file", return_value=False)
     @patch("robloxlx.compatibility.darling.shutil.which", return_value="/usr/bin/darling")
     @patch("robloxlx.compatibility.darling.subprocess.run", side_effect=AssertionError("must not execute Darling"))
-    def test_discovery_does_not_start_runtime(self, _run, _which):
+    def test_discovery_reports_missing_server_without_starting_runtime(self, _run, _which, _is_file):
         found = detect_darling()
         self.assertEqual(found.executable, Path("/usr/bin/darling"))
-        self.assertIn("NOT QUERIED", found.version)
+        self.assertIn("darlingserver NOT FOUND", found.version)
 
     def test_builds_shell_free_command_and_maps_host_path(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -157,13 +158,17 @@ class DarlingIndependentExecutableTests(unittest.TestCase):
         darling = shutil.which("darling")
         if not darling:
             self.skipTest("Darling runtime is not installed")
+        if not Path(darling).with_name("darlingserver").is_file():
+            self.skipTest("Darling launcher is installed without its darlingserver helper")
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             executable = self._build_fixture(root)
+            prefix = root / "dprefix"
+            prefix.mkdir(mode=0o700)
             from robloxlx.compatibility.darling import run_darling
             status = run_darling(
                 DarlingRuntime(Path(darling).resolve(), "detected"), executable, [], root / "run.log",
-                prefix=root / "dprefix", timeout=30,
+                prefix=prefix, timeout=30,
             )
             self.assertEqual(status, 0)
             self.assertIn("ROBLOXLX_MACHO_OK", (root / "run.log").read_text())

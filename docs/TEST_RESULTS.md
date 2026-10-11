@@ -1,6 +1,18 @@
 # Test results
 
-## 2026-10-11 (Darling backend work)
+## 2026-10-11 (Darling runtime installation check)
+
+- `pacman -Q darling-cli-release-local` — PASS; local package version `20260609-1` is installed.
+- `darling --version` — PASS as a launcher-only check; initialized `~/.darling` and printed `darling HEAD @ e947f0d5`. This does not prove that the Darwin runtime starts.
+- `PYTHONPATH=src python -m robloxlx.cli darling-test` — BLOCKED; local Mach-O fixture compiled, but Darling returned exit 1 before executing it: `Failed to start darlingserver` / `Cannot open mnt namespace file: No such file or directory`.
+- Package inspection found that the locally assembled `20260609-1` package omitted the official `darlingserver` helper. A corrected local `20260609-2` package was built; payload SHA-256 is `cfbdcc102ed06cc3ca7f60b683c510fc15c9d681693ebcdea6ee2a2de1c6dc47`. It has not been installed because sudo requires a password and the integrated terminal did not open. The integration unit test skips with this exact missing-helper condition.
+- `PYTHONPATH=src python -m unittest discover -s tests/unit` — PASS; 19 tests ran, 1 integration test skipped because `/usr/bin/darlingserver` is absent.
+- `PYTHONPATH=src python -m robloxlx.cli doctor` — PASS; Garuda Linux, x86_64, Wayland, NVIDIA GeForce RTX 2060 SUPER, Vulkan 1.4.351/1.4.354 and Vulkan Wayland WSI extensions detected. Darling is reported `INCOMPLETE (darlingserver NOT FOUND; version not queried)`. Audio, input and network utilities are present; this checks host dependencies only.
+- `PYTHONPATH=src python -m robloxlx.cli graphics-test --frames 3` — PASS; three Vulkan Wayland swapchain frames on the NVIDIA RTX 2060 SUPER; output confirms OpenGL was not used. This is host Vulkan only, not Metal through Darling.
+- `PYTHONPATH=src python -m robloxlx.cli self-test` — PASS; 19 tests ran, 1 integration test skipped for the missing Darling helper.
+- Roblox executable, client graphics/audio/input/network, account and gameplay — NOT TESTED.
+
+## 2026-10-11 (Darling backend baseline before runtime installation)
 
 Recorded after executing the commands in this section:
 

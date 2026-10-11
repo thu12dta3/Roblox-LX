@@ -4,7 +4,7 @@
 
 ## Objetivo e estado
 
-Investigar a execução do cliente desktop macOS original através da camada de tradução de APIs Darling, diretamente no Linux e sem Android, VM ou emulação de um sistema operacional convidado. ROBLOX-LX não baixa, altera ou injeta código no executável. O trabalho atual entrega um launcher Darling genérico, diagnóstico real do host e um teste independente Mach-O; o runtime Darling não está instalado neste host, portanto a execução do fixture e do Roblox está **UNKNOWN/BLOCKED**, respectivamente.
+Investigar a execução do cliente desktop macOS original através da camada de tradução de APIs Darling, diretamente no Linux e sem Android, VM ou emulação de um sistema operacional convidado. ROBLOX-LX não baixa, altera ou injeta código no executável. O host encontra o launcher Darling, mas o pacote local instalado não contém o helper `darlingserver`; o teste Mach-O independente falha antes de executar o fixture. A execução do Roblox continua **UNKNOWN**.
 
 ## CLI implementada
 
@@ -36,7 +36,7 @@ Darling e sondas de host são dependências opcionais e nunca instaladas pelo CL
 | CLI, descoberta de dependências e gestão de processo Darling | IMPLEMENTADO; coberto por testes unitários |
 | Vulkan host swapchain render | TESTADO com `vkcube` e a GPU física do host; não valida o caminho macOS/Metal de Darling |
 | Gráficos do cliente macOS por Metal→Vulkan em Darling, Vulkan-only | BLOCKED; falta apresentação de janela Metal por Vulkan sem OpenGL |
-| Binário Mach-O x86_64 independente | Fixture compila; execução real **BLOCKED** porque Darling não está instalado neste host |
+| Binário Mach-O x86_64 independente | Fixture compila; execução real **BLOCKED**: launcher instalado sem `darlingserver`, processo não inicia |
 | Cliente macOS oficial Roblox em Darling | UNKNOWN; nenhuma cópia foi adquirida ou executada |
 | Hyperion e partida multiplayer | UNKNOWN; não testados |
 | Adaptações que modificam o cliente ou suas verificações | BLOCKED por política do projeto |

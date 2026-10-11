@@ -58,3 +58,7 @@ Este é o primeiro caminho WSI real de um Mach-O neste projeto. **Não é implem
 Nada foi instalado como substituto de AppKit/QuartzCore; nenhum binário Roblox foi obtido, modificado ou executado. Abrir uma janela de teste não comprova que o cliente ou uma partida funcionem.
 
 A integração pendente é acompanhada na [issue #4](https://github.com/thu12dta3/Roblox-LX/issues/4). A evidência CLI está em `VULKAN_WINDOW_EVIDENCE.txt`.
+
+## Etapa posterior: APIs públicas
+
+O runtime `runtime/window/` agora implementa um subconjunto real de NSWindow/NSView/CALayer/CAMetalLayer, com fixture separado sem chamadas SDL/Vulkan. Essa etapa passou incluindo resize e segunda janela. As limitações listadas anteriormente continuam aplicáveis ao restante das APIs; consultar `runtime/window/README.md` e a seção mais recente de TEST_RESULTS.md.

@@ -7,7 +7,7 @@ Pinned sources:
 - Darling header checkout: 60ba801decee7a00782f74f6be4c8ffb013f79ff
 - Indium: 8423a7d2f053167030d2bc4a227f96243c740667
 
-Initialize the Darling header submodules: corefoundation (including swift-corelibs-foundation), foundation, libc, libclosure, libcxx, libdispatch, libplatform, objc4, xnu, libpthread, architecture, libmalloc, libxpc, security, cfnetwork and cocotron. These are headers needed to compile the framework; no OpenGL renderer is built.
+Initialize the Darling header submodules: corefoundation (including swift-corelibs-foundation), foundation, libc, libclosure, libcxx, libdispatch, libplatform, objc4, xnu, libpthread, architecture, libmalloc, libxpc, security, cfnetwork, cocotron and dyld. These are headers needed to compile the framework; no OpenGL renderer is built.
 
 Run `bash packaging/darling-metal/build.sh METAL_SOURCE DARLING_SOURCE INDIUM_SOURCE OUTPUT_DIRECTORY`. The script checks revisions, applies the patch, compiles all Metal translation units and links against the installed runtime. It never installs packages or replaces system files. Use `robloxlx metal-test --metal-library OUTPUT_DIRECTORY/Metal` to execute the independent GPU buffer test. Build requires Clang, LLD, the installed Darling runtime, and its exact LLVM 18 dependency. Tested target: x86_64. Other targets and GPU models remain UNKNOWN.
 

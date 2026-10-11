@@ -13,3 +13,5 @@ Research references (not bundled or incorporated):
 Using an external runtime is distinct from copying/linking its source. Any future distribution or source integration needs a component-level license review; this notice is not a legal determination that the requested proprietary notice supersedes third-party terms.
 
 - Window probe: native SDL2/SDL2-compat (zlib license), an external host dependency accessed through Darling ELF calls. No SDL source/library is bundled. The original fixture includes external Darling Metal/Indium headers at build time; it is not copied from their example programs. No GPL QuartzCore/AppKit source is included.
+
+- Experimental window runtime: original LXWindow source uses the unchanged proprietary project license. The separately supplied IndiumKit patch/source dependency is 0BSD; notices are preserved in `runtime/window/INDIUM_LICENSE`. That compatible permissive source is compiled from its external pinned checkout into the experimental library. Darling Metal remains a separately licensed dynamic dependency. No GPL AppKit/QuartzCore implementation is copied or linked into LXWindow.

@@ -4,7 +4,7 @@
 
 ## Objetivo e estado
 
-Investigar a execução do cliente desktop macOS original através da camada de tradução de APIs Darling, diretamente no Linux e sem Android, VM ou emulação de um sistema operacional convidado. ROBLOX-LX não baixa, altera ou injeta código no executável. O teste Mach-O independente já executou com sucesso pelo Darling instalado. O teste de DNS/TCP loopback também passou. O framework Metal corrigido passou no teste de preenchimento e cópia de buffers na GPU física via Vulkan, com encerramento limpo. O framework instalado ainda é o original; integração AppKit/CAMetalLayer e execução do Roblox continuam **UNKNOWN**.
+Investigar a execução do cliente desktop macOS original através da camada de tradução de APIs Darling, diretamente no Linux e sem Android, VM ou emulação de um sistema operacional convidado. ROBLOX-LX não baixa, altera ou injeta código no executável. O teste Mach-O independente já executou com sucesso pelo Darling instalado. O teste de DNS/TCP loopback também passou. O framework Metal corrigido passou no teste de preenchimento e cópia de buffers na GPU física via Vulkan, com encerramento limpo. O framework instalado ainda é o original; um subconjunto de NSWindow/NSView/CAMetalLayer já passou nos testes; AppKit/QuartzCore completos e execução do Roblox continuam **UNKNOWN**.
 
 ## CLI implementada
 
@@ -12,6 +12,7 @@ Investigar a execução do cliente desktop macOS original através da camada de 
 - `robloxlx graphics-test`: abre `vkcube` por alguns frames com WSI Wayland ou XCB, registra a GPU selecionada e comprova apresentação Vulkan independente do Roblox.
 - `robloxlx darling-test`: compila e executa um fixture Mach-O que chama `write` e `exit` pela `libSystem` real do Darling; captura log permanente e encerra o servidor do prefixo isolado. Prova carregamento e essas duas APIs.
 - `robloxlx network-test`: executa resolução de localhost e uma troca TCP loopback inteiramente dentro do fixture macOS; preserva o log. Não acessa serviços Roblox.
+- `robloxlx window-api-test --executable CAMINHO --wsi wayland`: testa o subconjunto real de NSWindow/NSView/CAMetalLayer, renderização Metal, resize e segunda janela. [Runtime e limitações](runtime/window/README.md).
 - `robloxlx window-test --executable CAMINHO --wsi wayland`: executa o fixture Mach-O de apresentação Vulkan; cria superfície/swapchain reais e apresenta pixels produzidos por Metal. [Implementação e reprodução](docs/VULKAN_WINDOW.md).
 - `robloxlx metal-test`: compila um Mach-O independente que tenta criar um dispositivo Metal, buffer e comando blit, verificando 256 bytes após sua conclusão. Registra a primeira API que falha. Não comprova apresentação de janela.
 - `robloxlx launch --program /caminho/Roblox.app [-- argumentos]`: lê `Contents/Info.plist`, confirma o executável Mach-O x86_64 do bundle e só então o chama pelo Darling instalado. Também aceita o caminho direto do executável. Captura stdout/stderr em `~/.local/state/robloxlx/logs/darling-launch.log` e recolhe o processo. `--prefix` seleciona um prefixo Darling existente. Sem `--prefix`, o próprio Darling pode inicializar o prefixo padrão no primeiro uso.

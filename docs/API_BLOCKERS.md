@@ -49,3 +49,16 @@ O patch é distribuído separadamente em `packaging/darling-metal/metal-vulkan.p
 ## Atualização: WSI independente
 
 O fixture `macho_window.mm` criou superfícies e swapchains reais Wayland e X11/XWayland, usando o mesmo dispositivo da API Metal, e apresentou 30 frames por Vulkan. A identificação interna do buffer precisou validar RTTI antes do cast; falha inicial e correção estão descritas em `VULKAN_WINDOW.md`. A integração `NSWindow/NSView/CAMetalLayer` permanece pendente. O resultado WSI não remove esse bloqueio e não comprova execução do Roblox.
+
+## Atualização: subconjunto público de APIs de janela
+
+| API | Esperado | Observado | Implementação | Estado |
+|---|---|---|---|---|
+| NSWindow criação/show/title/contentView/close | Janela nativa e ciclo de vida | Duas janelas Vulkan reais; fechamento repetido seguro | `runtime/window/LXWindow.mm` | PASS no subconjunto testado; origin/defer incompletos |
+| NSWindow.setContentSize / CAMetalLayer.drawableSize | Recriar framebuffer e drawables no tamanho solicitado | 640×480 → 320×240, dimensões das texturas conferidas | Mesmo runtime; resize nativo limitado a 1s e reset após GPU idle | PASS para resize explícito na escala testada |
+| NSView.layer / CAMetalLayer.nextDrawable | Associar layer a janela e adquirir textura Metal | Texturas reais da swapchain; zero-size/closed retornam nil | Runtime original + IndiumKit externo | PASS; composição/subviews UNKNOWN |
+| MTLCommandBuffer.presentDrawable | Apresentar renderização após sincronização GPU | 60 frames via API Metal e frame adicional em segunda janela | Metal patch existente + `runtime/window/indium-kit.patch` | PASS Wayland e X11 |
+| VK_SUBOPTIMAL_KHR | Aceitar apresentação válida, permitir posterior reconstrução | Código upstream abortava; patch aceita resultado e registra ocorrência | Patch externo IndiumKit PrivateDrawable.present | Corrigido; recuperação OUT_OF_DATE ainda pendente |
+| CAMetalDrawable timing/callbacks | Timestamps reais, agendamento e confirmação de apresentação | Não implementados; chamadas rejeitadas explicitamente | LXMetalDrawable no runtime original | UNKNOWN / não suportado |
+| NSApplication event loop / input | Receber e despachar eventos macOS | Não implementado nesse subconjunto | Próximo adaptador de eventos ainda ausente | UNKNOWN |
+| AppKit/QuartzCore completos e ABI do cliente | Resolver frameworks/macOS ABI integral | Biblioteca separada ligada somente ao fixture; frameworks instalados intactos | Build `runtime/window/build.sh` | UNKNOWN; Roblox ainda não pronto |

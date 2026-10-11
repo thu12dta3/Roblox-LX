@@ -44,7 +44,7 @@ index 3c63a1d..6701608 100644
  #import <Metal/MTLCommandEncoder.h>
  #import <Metal/MTLCommandQueue.h>
 diff --git a/src/Metal/MTLCommandBuffer.mm b/src/Metal/MTLCommandBuffer.mm
-index 7dedaa0..61b5370 100644
+index 7dedaa0..356e28e 100644
 --- a/src/Metal/MTLCommandBuffer.mm
 +++ b/src/Metal/MTLCommandBuffer.mm
 @@ -8,6 +8,8 @@
@@ -78,7 +78,18 @@ index 7dedaa0..61b5370 100644
  	}
  	return self;
  }
-@@ -131,9 +138,18 @@ struct MTLCommandBufferHandlerWrapper {
+@@ -122,6 +129,10 @@ struct MTLCommandBufferHandlerWrapper {
+ - (void)waitUntilCompleted
+ {
+ 	_commandBuffer->waitUntilCompleted();
++    // Indium notifies its completion condition before running callbacks.
++    // A successful wait is direct evidence of completion; reflect it before
++    // returning to callers rather than racing the status callback.
++    _status->store(4);
+ }
+ 
+ - (void)presentDrawable: (id<MTLDrawable>)drawable
+@@ -131,9 +142,18 @@ struct MTLCommandBufferHandlerWrapper {
  
  - (void)commit
  {

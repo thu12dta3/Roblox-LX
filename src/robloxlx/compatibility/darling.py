@@ -230,6 +230,19 @@ def _test_fixture(source_name: str, marker: str, entry: str, frameworks: list[st
 
 def test_window_runtime(executable: Path, log_path: Path, *, driver: Path | None = None,
                         wsi: str = "wayland") -> DarlingSmokeResult:
+    return _test_window_probe(executable, log_path, driver=driver, wsi=wsi,
+                             marker="ROBLOXLX_MACOS_VULKAN_WINDOW_OK")
+
+
+def test_public_window_runtime(executable: Path, log_path: Path, *, driver: Path | None = None,
+                               wsi: str = "wayland") -> DarlingSmokeResult:
+    """Test the separately linked limited public window/layer implementation."""
+    return _test_window_probe(executable, log_path, driver=driver, wsi=wsi,
+                             marker="ROBLOXLX_PUBLIC_WINDOW_OK")
+
+
+def _test_window_probe(executable: Path, log_path: Path, *, driver: Path | None = None,
+                        wsi: str = "wayland", marker: str) -> DarlingSmokeResult:
     """Run a source-built independent WSI fixture, not a Roblox executable."""
     if wsi not in ("wayland", "x11"):
         return DarlingSmokeResult(False, "WSI must be wayland or x11")
@@ -240,7 +253,7 @@ def test_window_runtime(executable: Path, log_path: Path, *, driver: Path | None
         target = resolve_macos_executable(executable)
         overrides = select_hardware_vulkan_environment(driver)
         overrides.update({"ROBLOXLX_METAL_WSI": wsi, "SDL_VIDEODRIVER": wsi})
-        return _run_independent_probe(runtime, target, "ROBLOXLX_MACOS_VULKAN_WINDOW_OK", log_path, overrides)
+        return _run_independent_probe(runtime, target, marker, log_path, overrides)
     except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
         return DarlingSmokeResult(False, f"Darling WSI test failed: {exc}")
 

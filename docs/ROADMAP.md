@@ -1,13 +1,14 @@
 # Roadmap
 
-- [x] M0 repository baseline and feasibility research (documentary; no client test).
-- [x] M1 initial proprietary license, documentation, and project foundation.
-- [x] M2 first CLI diagnostics and unit coverage.
-- [x] M3a detect user-installed Wine and safely construct an argv vector; no automatic installation.
-- [ ] M3b implement bounded Wine process lifecycle management.
-- [ ] M4 test Wine with an authorized, harmless Windows desktop test application (no Roblox binary/account).
-- [ ] M5 document Wine's missing APIs from independent fixtures and upstream documentation.
-- [ ] M6 wait for Roblox/Hyperion Wine compatibility or another supported, unmodified desktop path.
-- [ ] M7 only then assess an authorized Roblox launch; never disable or bypass Hyperion.
+- [x] Reinspect the ROBLOX-LX code and shift implementation priority to macOS desktop through Darling.
+- [x] Audit MacOBlox runtime, graphics, audio, input, network and client-specific changes without copying source.
+- [x] Implement read-only dependency diagnostics, Darling discovery, process lifecycle, path mapping, private logs, and launch/dry-run CLI.
+- [x] Build an independent x86_64 Mach-O syscall fixture and add a Darling execution integration test.
+- [x] Add Arch/Garuda PKGBUILD and document exact UNKNOWN/BLOCKED API observations.
+- [ ] Run the independent Mach-O fixture under an already installed Darling runtime and isolated DPREFIX.
+- [ ] Add standalone graphics, audio, mouse/keyboard and networking probes; run them only when runtime/device prerequisites exist.
+- [ ] Implement narrowly scoped APIs only after independent tests reproduce a missing behavior and license review is complete.
+- [ ] Assess the unmodified Roblox macOS executable only after independent API coverage is known and official provenance is verifiable.
+- [ ] Test gameplay only with explicit account-risk approval; report process launch separately from an actual playable session.
 
-No milestone implies Roblox is playable. Current project launch state is BLOCKED by Hyperion's stated Wine incompatibility. Darling, macOS clients, mobile clients, and VMs remain excluded.
+The current host does not have Darling, so runtime compatibility remains unverified.

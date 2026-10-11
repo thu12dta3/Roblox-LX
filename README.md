@@ -1,58 +1,44 @@
 # ROBLOX-LX
 
-**Bannaman6655 Productions** — private Linux desktop compatibility project. ROBLOX-LX is not affiliated with Roblox Corporation.
+**Bannaman6655 Productions** — projeto privado de compatibilidade desktop no Linux. Não afiliado à Roblox Corporation.
 
-## Purpose and current state
+## Objetivo e estado
 
-The goal is to run the official **Windows desktop client** on Linux by translating the APIs it calls through Wine, without booting or emulating a Windows/macOS operating system. Mac clients, mobile/tablet versions, and VMs are out of scope. The current release is only an early diagnostic CLI foundation; it does not install or launch Roblox. Roblox lists Linux as unsupported, and a Roblox staff statement says Hyperion with all security features enabled does not work under Wine. We will not bypass or disable it, so gameplay remains BLOCKED unless Roblox restores official Wine support or provides a compliant path. See [feasibility](docs/FEASIBILITY.md) and [risks](docs/RISKS.md).
+Investigar a execução do cliente desktop macOS original através da camada de tradução de APIs Darling, diretamente no Linux e sem Android, VM ou emulação de um sistema operacional convidado. ROBLOX-LX não baixa, altera ou injeta código no executável. O trabalho atual entrega um launcher Darling genérico, diagnóstico real do host e um teste independente Mach-O; o runtime Darling não está instalado neste host, portanto a execução do fixture e do Roblox está **UNKNOWN/BLOCKED**, respectivamente.
 
-## Implemented
+## CLI implementada
 
-- `robloxlx doctor`: read-only host, graphics-tool, and Wine API-translator probes.
-- Wine runtime detection and safe argument construction for an existing local Windows program (no execution yet).
-- `robloxlx verify`: optional SHA-256 measurement for a user-configured local file; no official trust baseline is bundled.
-- `robloxlx compatibility`: reports current known limitations.
-- `robloxlx launch --dry-run`: reports readiness and never starts a process.
-- `robloxlx launch`: safely reports BLOCKED while there is no validated backend.
-- `robloxlx logs`, `self-test`, `cleanup`, and `version`.
+- `robloxlx doctor`: detecta distribuição, sessão gráfica, GPU, driver, OpenGL/Vulkan, Darling, ferramentas e bibliotecas de host associadas a gráficos, áudio, entrada e rede.
+- `robloxlx launch --program /caminho/para/binario-macos [-- argumentos]`: executa um binário local pelo Darling instalado, captura stdout/stderr em `~/.local/state/robloxlx/logs/darling-launch.log` e recolhe o processo. `--prefix` seleciona um prefixo Darling existente. Sem `--prefix`, o próprio Darling pode inicializar o prefixo padrão no primeiro uso.
+- `robloxlx launch --dry-run --program ...`: mostra o comando e não inicia processo.
+- `robloxlx compatibility`, `logs`, `self-test`, `cleanup`, `verify` e `version`.
 
-## Development use
+O comando genérico aceita binários locais para testes de compatibilidade. Isso não demonstra que Roblox abre, renderiza, aceita entrada, reproduz áudio, conecta a partidas ou funciona com Hyperion.
 
-Requires Python 3.10+. From a checkout:
+## Desenvolvimento
+
+Requer Python 3.10+. Sem dependências Python externas:
 
 ```sh
-python -m pip install -e .
-robloxlx doctor
-robloxlx compatibility
-robloxlx self-test
+PYTHONPATH=src python -m robloxlx.cli doctor
+PYTHONPATH=src python -m robloxlx.cli self-test
+python -m unittest discover -s tests/unit
 ```
 
-Optional host probes are `nvidia-smi`, `lspci`, `glxinfo`, and `vulkaninfo`. Missing probes are reported as UNKNOWN. No system packages are installed or global settings changed.
+Darling e sondas de host são dependências opcionais e nunca instaladas pelo CLI. Veja [instalação Arch/Garuda](docs/INSTALLATION.md), [matriz de compatibilidade](docs/COMPATIBILITY.md), [auditoria Darling/MacOBlox e bloqueios de API](docs/API_BLOCKERS.md) e [resultados dos testes](docs/TEST_RESULTS.md).
 
-## Compatibility status
+## Compatibilidade
 
-| Capability | Status | Evidence |
-|---|---|---|
-| Roblox Windows desktop client under Wine API translation | BLOCKED | Roblox staff says Hyperion with all features enabled does not work on Wine; no bypass is implemented. |
-| Full Windows/macOS OS, VM, emulator, Mac/mobile client | OUT OF SCOPE | Explicitly excluded. |
-| Roblox launch | BLOCKED | No currently validated path that keeps Hyperion intact. |
-| Games, rendering, audio, input, multiplayer | UNKNOWN | No real-client or game test performed. |
+| Capacidade | Estado |
+|---|---|
+| CLI, descoberta de dependências e gestão de processo Darling | IMPLEMENTADO; coberto por testes unitários |
+| Binário Mach-O x86_64 independente | Fixture compila; execução real **BLOCKED** porque Darling não está instalado neste host |
+| Cliente macOS oficial Roblox em Darling | UNKNOWN; nenhuma cópia foi adquirida ou executada |
+| Hyperion e partida multiplayer | UNKNOWN; não testados |
+| Adaptações que modificam o cliente ou suas verificações | BLOCKED por política do projeto |
 
-Never interpret a local hash as proof that a binary is official. Do not supply account passwords to ROBLOX-LX. Do not disable or bypass anti-cheat mechanisms.
+Não declarar compatibilidade ou segurança sem evidência reproduzível. Nenhuma conta, credencial ou binário Roblox foi usado nesta execução.
 
-## Documents
+## Licença
 
-- [Architecture](docs/ARCHITECTURE.md)
-- [Baseline audit](docs/BASELINE.md)
-- [Feasibility research](docs/FEASIBILITY.md)
-- [Compatibility matrix](docs/COMPATIBILITY.md)
-- [Security](docs/SECURITY.md)
-- [Risks](docs/RISKS.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Test results](docs/TEST_RESULTS.md)
-- [Development](docs/DEVELOPMENT.md)
-- [Third-party notices](THIRD_PARTY_NOTICES.md)
-
-## License
-
-The exact proprietary notice in `LICENSE` applies to materials owned by Bannaman6655 Productions. It does not change third-party licenses or rights. No third-party source code is bundled in this initial implementation.
+O arquivo proprietário `LICENSE` aplica-se exatamente aos materiais de Bannaman6655 Productions. Nenhum código do Darling ou MacOBlox foi copiado para este repositório.

@@ -1,7 +1,22 @@
 # Development
 
-Requires Python 3.10 or newer. Install locally with `python -m pip install -e .`. Run `python -m unittest discover -s tests/unit` and `robloxlx doctor`.
+Requires Python 3.10 or newer. The runtime uses only the Python standard library.
 
-Diagnostics are read-only and subprocess probes have a short timeout. Do not add downloads, privileged commands, client modifications, secret capture, anti-cheat evasion, or protocol manipulation. Keep tests independent of Roblox credentials and production game servers.
+## Run locally
 
-Use Conventional Commit subjects (`feat:`, `fix:`, `docs:`, `test:`, `build:`, `chore:`). Development branch: `codex/bootstrap-roblox-lx`.
+```sh
+python -m pip install -e .
+robloxlx doctor
+robloxlx compatibility
+robloxlx self-test
+```
+
+From a source checkout, tests can also be run without installing the package:
+
+```sh
+PYTHONPATH=src python -m unittest discover -s tests/unit -v
+PYTHONPATH=src python -m robloxlx.cli version
+python -m compileall -q src tests
+```
+
+Keep diagnostics read-only, use fixed subprocess arguments and timeouts, and test without Roblox credentials or production game sessions. Do not add client patching, code injection, anti-cheat evasion, secret capture, or protocol manipulation. Use Conventional Commit subjects such as `feat:`, `fix:`, `docs:`, `test:`, and `chore:`.

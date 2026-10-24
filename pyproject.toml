@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "roblox-lx"
-version = "0.1.0"
-description = "Darling desktop compatibility diagnostics and launcher for Linux"
+version = "0.2.0"
+description = "Linux-native host diagnostics and Vulkan compatibility research"
 requires-python = ">=3.10"
-license = { text = "PROPRIETARY ALL RIGHTS RESERVED" }
+license = "AGPL-3.0-only"
 authors = [{ name = "Bannaman6655 Productions" }]
 dependencies = []
 
@@ -16,6 +16,3 @@ robloxlx = "robloxlx.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.setuptools.package-data]
-"robloxlx.compatibility" = ["fixtures/*.s", "fixtures/*.c", "fixtures/*.mm"]

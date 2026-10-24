@@ -1,16 +1,19 @@
 # Roadmap
 
-- [x] Reinspect the ROBLOX-LX code and shift implementation priority to macOS desktop through Darling.
-- [x] Audit MacOBlox runtime, graphics, audio, input, network and client-specific changes without copying source.
-- [x] Implement read-only dependency diagnostics, Darling discovery, process lifecycle, path mapping, private logs, and launch/dry-run CLI.
-- [x] Build an independent x86_64 Mach-O syscall fixture, app bundle preflight, and bounded Darling smoke-test command.
-- [x] Enforce Vulkan-only host graphics policy and run a standalone GPU/window Vulkan smoke test with `vkcube`; reject software Vulkan devices.
-- [x] Add Arch/Garuda PKGBUILD and document exact UNKNOWN/BLOCKED API observations.
-- [ ] Run the independent Mach-O fixture under an already installed Darling runtime and isolated DPREFIX.
-- [ ] Implement and test a Darling Metal→Vulkan window/swapchain path that never calls or shares surfaces with OpenGL; current host Vulkan test does not validate macOS Metal.
-- [ ] Add standalone audio, mouse/keyboard and networking probes; run them only when runtime/device prerequisites exist.
-- [ ] Implement narrowly scoped APIs only after independent tests reproduce a missing behavior and license review is complete.
-- [ ] Assess the unmodified Roblox macOS executable only after independent API coverage is known and official provenance is verifiable.
-- [ ] Test gameplay only with explicit account-risk approval; report process launch separately from an actual playable session.
+## Current foundation
+- [x] Remove the macOS/Darling client route and its experimental framework, fixtures, and documentation.
+- [x] Keep the project focused on traditional Linux desktop diagnostics.
+- [x] Preserve the independent Vulkan host smoke test and its unit coverage.
+- [x] Document the difference between host capability checks and actual Roblox compatibility.
 
-The current host does not have Darling, so runtime compatibility remains unverified.
+## Next
+- [ ] Run the full unit suite and static checks on every change.
+- [ ] Test the Vulkan smoke command on real Wayland and X11 hardware configurations.
+- [ ] Improve GPU/driver reporting across NVIDIA, AMD, and Intel without treating missing tools as a hard failure.
+- [ ] Define a concrete Linux-native compatibility approach before implementing a launcher or client integration.
+- [ ] Keep the compatibility matrix evidence-based; do not claim gameplay support until independently demonstrated.
+
+## Explicitly out of scope
+- macOS client, Darling, Metal bridges, and macOS framework shims.
+- Client modification, injection, anti-cheat bypass, or protocol spoofing.
+- Claims that a successful Vulkan smoke test proves Roblox is playable.

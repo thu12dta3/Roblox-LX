@@ -1,11 +1,11 @@
 # Architecture
 
-ROBLOX-LX 0.1.0 is a Python CLI built on the standard library. Current priority is the official macOS desktop executable through Darling's Darwin/macOS API translation on Linux, without Android, a guest OS, or a VM.
+ROBLOX-LX is a Linux-native diagnostic and compatibility-research CLI. The repository intentionally excludes macOS execution paths and does not claim to provide a working Roblox client.
 
-- `robloxlx.cli`: subcommands, exit codes, local state paths, and fail-closed launch behavior.
-- `robloxlx.diagnostics`: read-only Linux host probes plus Vulkan, audio, input and network tool/library availability. The product graphics route must not use OpenGL or Zink.
-- `robloxlx.graphics.vulkan`: bounded `vkcube` WSI smoke on Wayland/XCB; Vulkan-only and independent of Darling/Roblox.
-- `robloxlx.compatibility.darling`: detects installed Darling, maps host paths to `/Volumes/SystemRoot`, builds shell-free argv, supports an existing DPREFIX, captures output to mode-0600 logs, and waits/reaps or terminates the process group.
-- `tests/unit`: mocked backend tests and a standalone Mach-O syscall fixture with an integration run that requires installed Darling.
+- `robloxlx.cli`: command parsing, exit codes, file hashing, log discovery, and bounded cleanup.
+- `robloxlx.diagnostics`: read-only Linux host probes for OS, kernel, GPU, graphical session, Vulkan, and common audio/input/network tools.
+- `robloxlx.graphics.vulkan`: bounded `vkcube` smoke test for hardware Vulkan presentation on Wayland/X11.
+- `tests/unit`: deterministic tests for diagnostics and Vulkan process handling.
+- `.github/workflows`: unit tests, static security checks, and Python compilation.
 
-The launcher never changes executable bytes and does not implement Roblox-specific shims, protocol changes, or anti-cheat behavior. Darwin API gaps are recorded as UNKNOWN until directly observed on the installed Darling build or an independent macOS fixture. The Darling process can initialize its default DPREFIX on first use; users can specify an existing prefix to control that state. No credentials or account data are handled.
+Subprocess probes use fixed argument vectors, bounded timeouts, and no shell. Diagnostics do not install packages, change global settings, download a client, or request credentials. A successful host Vulkan test is not evidence that Roblox itself is compatible.

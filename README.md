@@ -4,7 +4,7 @@
 
 Copyright © 2026 Mice Works. Licensed under GNU AGPL v3; see [LICENSE](LICENSE).
 
-ROBLOX-LX is a Linux-native project for inspecting a traditional Linux desktop environment and validating its hardware Vulkan presentation path. It intentionally excludes the macOS client route, Darling, Metal bridges, macOS framework shims, and macOS-specific build fixtures.
+ROBLOX-LX is a Linux-native project for inspecting a traditional Linux desktop environment and validating its hardware Vulkan presentation path. It intentionally excludes the macOS client route, Darling, Metal bridges, (no more MacOS) framework shims, and macOS-specific build fixtures.
 
 ## Current status
 

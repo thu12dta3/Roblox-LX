@@ -5,11 +5,16 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "roblox-lx"
 version = "0.2.0"
-description = "Linux-native host diagnostics and Vulkan compatibility research"
+description = "Mice Works Linux-native host diagnostics and Vulkan compatibility research"
 requires-python = ">=3.10"
 license = "AGPL-3.0-only"
-authors = [{ name = "Bannaman6655 Productions" }]
+authors = [{ name = "Mice Works" }]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/thu12dta3/Roblox-LX"
+Repository = "https://github.com/thu12dta3/Roblox-LX"
+Issues = "https://github.com/thu12dta3/Roblox-LX/issues"
 
 [project.scripts]
 robloxlx = "robloxlx.cli:main"

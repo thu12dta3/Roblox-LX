@@ -1,16 +1,14 @@
 pkgname=roblox-lx
-pkgver=0.1.0
+pkgver=0.2.0
 pkgrel=1
-pkgdesc='Private Darling compatibility diagnostics and launcher'
+pkgdesc='Linux-native host diagnostics and Vulkan compatibility research'
 arch=('any')
 url='https://github.com/thu12dta3/Roblox-LX'
-license=('custom')
+license=('AGPL-3.0-only')
 depends=('python>=3.10')
-optdepends=('vulkan-tools: Vulkan diagnostics and host rendering test'
-            'sdl2: independent macOS Vulkan window probe'
-            'clang: independent Mach-O compilation'
-            'lld: Mach-O linker'
-            'llvm18-libs: exact LLVM dependency of the tested external Darling release')
+optdepends=('vulkan-tools: Vulkan diagnostics and host rendering smoke test'
+            'nvidia-utils: NVIDIA GPU and driver reporting'
+            'pciutils: fallback GPU identification')
 makedepends=()
 source=()
 sha256sums=()
@@ -22,10 +20,9 @@ package() {
   cp -a "${repo_root}/src/robloxlx" "${pkgdir}/usr/lib/roblox-lx/src/"
   install -Dm644 "${repo_root}/LICENSE" "${pkgdir}/usr/share/licenses/roblox-lx/LICENSE"
   install -Dm644 "${repo_root}/README.md" "${pkgdir}/usr/share/doc/roblox-lx/README.md"
-  install -Dm644 "${repo_root}/docs/INSTALLATION.md" "${pkgdir}/usr/share/doc/roblox-lx/docs/INSTALLATION.md"
-  install -Dm644 "${repo_root}/docs/COMPATIBILITY.md" "${pkgdir}/usr/share/doc/roblox-lx/docs/COMPATIBILITY.md"
-  install -Dm644 "${repo_root}/docs/API_BLOCKERS.md" "${pkgdir}/usr/share/doc/roblox-lx/docs/API_BLOCKERS.md"
-  install -Dm644 "${repo_root}/docs/VULKAN_WINDOW.md" "${pkgdir}/usr/share/doc/roblox-lx/docs/VULKAN_WINDOW.md"
+  for doc in ARCHITECTURE COMPATIBILITY DEVELOPMENT ROADMAP SECURITY; do
+    install -Dm644 "${repo_root}/docs/${doc}.md" "${pkgdir}/usr/share/doc/roblox-lx/docs/${doc}.md"
+  done
   install -dm755 "${pkgdir}/usr/bin"
   cat > "${pkgdir}/usr/bin/robloxlx" <<'EOF'
 #!/bin/sh

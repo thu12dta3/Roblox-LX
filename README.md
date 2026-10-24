@@ -1,6 +1,8 @@
 # ROBLOX-LX
 
-**Bannaman6655 Productions** · Linux-first compatibility research. Not affiliated with Roblox Corporation.
+**A Mice Works project** · Linux-first compatibility research. Not affiliated with Roblox Corporation.
+
+Copyright © 2026 Mice Works. Licensed under GNU AGPL v3; see [LICENSE](LICENSE).
 
 ROBLOX-LX is a Linux-native project for inspecting a traditional Linux desktop environment and validating its hardware Vulkan presentation path. It intentionally excludes the macOS client route, Darling, Metal bridges, macOS framework shims, and macOS-specific build fixtures.
 
@@ -75,6 +77,10 @@ python -m compileall -q src tests
 CI runs unit tests and static checks on Ubuntu with Python 3.12. A passing unit suite does not prove Vulkan works on every GPU or that Roblox is compatible. Hardware-dependent checks must be run on the target Linux machine and reported separately.
 
 See [Architecture](docs/ARCHITECTURE.md), [Compatibility](docs/COMPATIBILITY.md), [Security](docs/SECURITY.md), [Development](docs/DEVELOPMENT.md), and [Roadmap](docs/ROADMAP.md).
+
+## About Mice Works
+
+Mice Works is the project brand behind ROBLOX-LX. The repository is currently hosted under the GitHub account `thu12dta3`; this branding statement does not itself transfer the repository to a GitHub organization.
 
 ## License
 

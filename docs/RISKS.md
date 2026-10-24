@@ -1,14 +1,12 @@
 # Risks
 
-- Roblox officially does not support Linux. Third-party compatibility is unsupported by Roblox and account-risk-free operation cannot be promised.
-- Darling's GUI, graphics, audio and API coverage for the Roblox macOS client is unknown until tested with independent programs.
-- The installed Darling runtime is absent on the current development host, so Mach-O execution is not yet confirmed.
-- A client process starting or window appearing would not establish gameplay, networking or multiplayer functionality.
-- Client modification, code injection, anti-cheat evasion and protocol spoofing are prohibited by project rules.
-- Android/mobile clients and full OS virtual machines are excluded by the user.
-- No client binary, login, production account, or game server was used in this work.
-- A local SHA-256 digest has no authenticity meaning without a trusted official expected digest or signature verification key/chain.
-- Darling is GPL-3.0 with potentially distinct subcomponent licenses; it remains an external runtime and no source is incorporated.
-- Host diagnostic output can reveal device/system details if shared; review logs before publication.
+- Roblox does not provide a generally supported native Linux desktop client; this repository does not currently implement a working client.
+- A passing host Vulkan smoke test proves only that the tested Linux Vulkan presentation path works. It does not prove Roblox compatibility, gameplay, multiplayer, or performance.
+- Third-party compatibility work is unsupported by Roblox, and account-risk-free operation cannot be promised for future approaches.
+- Client modification, code injection, anti-cheat evasion, and protocol spoofing are prohibited by project policy.
+- No Roblox credentials, account sessions, or production game servers are used by the diagnostic suite.
+- A local SHA-256 digest does not establish authenticity without a trusted publisher signature or digest baseline.
+- Host diagnostics can expose device and system details if shared; review output before publishing logs.
+- Hardware-dependent Vulkan results vary by GPU, driver, compositor, and session type.
 
-Risk reduction: keep the official executable unmodified, never handle passwords/tokens, keep logs local, and test compatibility first with independently authorized macOS binaries.
+Risk reduction: keep the current tooling read-only, make claims only from reproducible evidence, and validate any future Linux compatibility approach against explicit security and licensing constraints.
